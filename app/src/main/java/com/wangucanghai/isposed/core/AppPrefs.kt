@@ -71,4 +71,17 @@ class AppPrefs(context: Context) {
     var lastUpdateNotes: String
         get() = sp.getString("last_update_notes", "") ?: ""
         set(v) = sp.edit().putString("last_update_notes", v).apply()
+
+    // ---------- auto-converted adapters (install-time module conversion) ----------
+    /** Adapter descriptor JSON for a module id that was auto-converted on install. */
+    fun getAdapter(moduleId: String): String? =
+        sp.getString("adapter:" + moduleId, null)
+
+    fun setAdapter(moduleId: String, json: String) =
+        sp.edit().putString("adapter:" + moduleId, json).apply()
+
+    fun allAdapters(): Map<String, String> =
+        sp.all.entries
+            .filter { it.key.startsWith("adapter:") }
+            .associate { it.key.removePrefix("adapter:") to (it.value as String) }
 }

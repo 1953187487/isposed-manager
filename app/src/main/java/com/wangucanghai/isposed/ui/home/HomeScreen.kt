@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Terminal
@@ -66,7 +67,7 @@ import com.wangucanghai.isposed.util.Logger
  * Copyright (C) 2026 万古沧海
  */
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(modifier: Modifier = Modifier, onModules: () -> Unit = {}) {
     val context = LocalContext.current
     val prefs = remember { AppPrefs(context) }
     var moduleTotal by remember { mutableStateOf(0) }
@@ -124,48 +125,34 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         item { SectionTitle("快捷操作") }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                QuickAction(
-                    icon = Icons.Filled.RocketLaunch,
-                    label = "无线调试\n激活",
-                    modifier = Modifier.weight(1f),
-                    onClick = { context.startActivity(Intent(context, ActivationActivity::class.java)) },
-                )
-                QuickAction(
-                    icon = Icons.Filled.AutoAwesome,
-                    label = "AI 模块\n转换",
-                    modifier = Modifier.weight(1f),
-                    onClick = { context.startActivity(Intent(context, ConvertActivity::class.java)) },
-                )
-                QuickAction(
-                    icon = Icons.Filled.DeveloperMode,
-                    label = "AI 直接\n开发",
-                    modifier = Modifier.weight(1f),
-                    onClick = { context.startActivity(Intent(context, DevActivity::class.java)) },
-                )
-            }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                QuickAction(
-                    icon = Icons.Filled.Terminal,
-                    label = "Shell\n终端",
-                    modifier = Modifier.weight(1f),
-                    onClick = { context.startActivity(Intent(context, ShellActivity::class.java)) },
-                )
-                QuickAction(
-                    icon = Icons.Filled.SystemUpdateAlt,
-                    label = "检查\n更新",
-                    modifier = Modifier.weight(1f),
-                    onClick = { context.startActivity(Intent(context, UpdateActivity::class.java)) },
-                )
-                QuickAction(
-                    icon = Icons.Filled.Info,
-                    label = "关于\n本应用",
-                    modifier = Modifier.weight(1f),
-                    onClick = { context.startActivity(Intent(context, AboutActivity::class.java)) },
-                )
-            }
+            QuickActionGrid(
+                actions = listOf(
+                    QuickTile(Icons.Filled.RocketLaunch, "激活") {
+                        context.startActivity(Intent(context, ActivationActivity::class.java))
+                    },
+                    QuickTile(Icons.Filled.Terminal, "终端") {
+                        context.startActivity(Intent(context, ShellActivity::class.java))
+                    },
+                    QuickTile(Icons.Filled.Build, "模块") {
+                        onModules()
+                    },
+                    QuickTile(Icons.Filled.AutoAwesome, "转换") {
+                        context.startActivity(Intent(context, ConvertActivity::class.java))
+                    },
+                    QuickTile(Icons.Filled.DeveloperMode, "开发") {
+                        context.startActivity(Intent(context, DevActivity::class.java))
+                    },
+                    QuickTile(Icons.Filled.SystemUpdateAlt, "更新") {
+                        context.startActivity(Intent(context, UpdateActivity::class.java))
+                    },
+                    QuickTile(Icons.Filled.Info, "配置") {
+                        context.startActivity(Intent(context, AiConfigActivity::class.java))
+                    },
+                    QuickTile(Icons.Filled.Policy, "关于") {
+                        context.startActivity(Intent(context, AboutActivity::class.java))
+                    },
+                ),
+            )
         }
 
         item { SectionTitle("运行状态") }
@@ -262,6 +249,27 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
     }
 }
 
+private data class QuickTile(val icon: ImageVector, val label: String, val onClick: () -> Unit)
+
+@Composable
+private fun QuickActionGrid(actions: List<QuickTile>) {
+    var row = actions.chunked(4)
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        row.forEach { chunk ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                chunk.forEach { tile ->
+                    QuickAction(
+                        icon = tile.icon,
+                        label = tile.label,
+                        modifier = Modifier.weight(1f),
+                        onClick = tile.onClick,
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun QuickAction(
     icon: ImageVector,
@@ -270,24 +278,24 @@ private fun QuickAction(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = modifier.clickable { onClick() },
+        modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp),
+            modifier = Modifier.padding(vertical = 14.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(26.dp),
+                modifier = Modifier.size(24.dp),
             )
-            SpacerH(8)
+            SpacerH(6)
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium,
             )

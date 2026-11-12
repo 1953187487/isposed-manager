@@ -34,7 +34,13 @@ class ModuleInstaller(
         val description: String,
     )
 
-    data class InstallResult(val ok: Boolean, val message: String, val prop: ModuleProp?)
+    data class InstallResult(
+        val ok: Boolean,
+        val message: String,
+        val prop: ModuleProp?,
+        val autoConverted: Boolean = false,
+        val entryPoint: String? = null,
+    )
 
     /** Parse module.prop from a module ZIP. */
     fun parseModuleProp(zipPath: String): ModuleProp? {
@@ -73,6 +79,24 @@ class ModuleInstaller(
     }
     }
 
+    /** Detect the Xposed/LSPosed entry point from a module ZIP, if any. */
+    fun detectXposedEntry(zipPath: String): String? {
+        return try {
+            val zip = ZipFile(zipPath)
+            val entry = zip.getEntry("assets/xposed_init") ?: zip.getEntry("xposed_init")
+            if (entry == null) {
+                zip.close()
+                return null
+            }
+            val text = zip.getInputStream(entry).bufferedReader().readText()
+            zip.close()
+            text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("#") }
+        } catch (t: Throwable) {
+            Logger.e("detectXposedEntry: ${t.message}")
+            null
+        }
+    }
+
     /**
      * Install a module ZIP. Returns result; caller should offer Re-ignite.
      */
@@ -108,7 +132,30 @@ class ModuleInstaller(
             // run customize.sh if present
             val customize = shell.exec("test -f $pluginDir/customize.sh && sh $pluginDir/customize.sh || echo NONE")
             Logger.i("customize.sh -> ${customize.output.take(200)}")
-            InstallResult(true, "模块 ${prop.name} v${prop.version} 已安装，需热重启生效", prop)
+            // Merge convert-into-install: auto-detect an Xposed entry and register the
+            // adapter so the module is usable under the current (Magisk/LSPosed) runtime
+            // without a separate manual convert step.
+            val entry = detectXposedEntry(zipPath)
+            if (entry != null) {
+                val adapterJson = buildString {
+                    appendLine("{")
+                    appendLine("  \"sourceModule\": \"${prop.id}\",")
+                    appendLine("  \"name\": \"${prop.name}\",")
+                    appendLine("  \"entryPoints\": [\"$entry\"]")
+                    append("}")
+                }
+                prefs.setAdapter(prop.id, adapterJson)
+                Logger.i("auto-converted ${prop.id} entry=$entry")
+                InstallResult(
+                    true,
+                    "模块 ${prop.name} v${prop.version} 已安装并自动转换为可用模块，需热重启生效",
+                    prop,
+                    autoConverted = true,
+                    entryPoint = entry,
+                )
+            } else {
+                InstallResult(true, "模块 ${prop.name} v${prop.version} 已安装，需热重启生效", prop)
+            }
         } catch (t: Throwable) {
             Logger.e("Install failed: ${t.message}")
             InstallResult(false, "安装失败：${t.message}", prop)

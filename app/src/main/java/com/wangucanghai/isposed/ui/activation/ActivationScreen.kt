@@ -1,6 +1,16 @@
 package com.wangucanghai.isposed.ui.activation
 
 import android.widget.Toast
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -65,11 +76,19 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
 
     var events by remember { mutableStateOf<List<Pair<String, Boolean>>>(emptyList()) }
     var busy by remember { mutableStateOf(false) }
+    var step by remember { mutableStateOf("") }
     var pairing by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
     var connecting by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
     var code by remember { mutableStateOf("") }
     var tcpPort by remember { mutableStateOf("5555") }
     var active by remember { mutableStateOf(prefs.adbPaired) }
+
+    val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
+        initialValue = 0.35f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(650, easing = LinearEasing), RepeatMode.Reverse),
+        label = "pulseAlpha",
+    )
 
     fun log(msg: String, error: Boolean = false) {
         events = events + (msg to error)
@@ -98,7 +117,17 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("当前状态", style = MaterialTheme.typography.titleSmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val dotColor = if (active) Color(0xFF2E7D32) else Color(0xFF9E9E9E)
+                    Canvas(Modifier.size(12.dp)) {
+                        drawCircle(
+                            color = dotColor,
+                            alpha = if (busy) pulse else 1f,
+                        )
+                    }
+                    SpacerH(4)
+                    Text("当前状态", style = MaterialTheme.typography.titleSmall)
+                }
                 StatusBadge(if (active) "已激活" else "未激活", active)
             }
             SpacerH(10)
@@ -107,6 +136,14 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            AnimatedVisibility(visible = busy, enter = fadeIn() + slideInVertically { it / 2 }) {
+                SpacerH(8)
+                Text(
+                    text = step.ifBlank { "正在激活…" },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
 
         SectionTitle("一键激活")
@@ -115,9 +152,11 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                 scope.launch {
                     busy = true
                     events = emptyList()
+                    step = "发现设备…"
                     log("开始发现无线调试服务…")
                     val pairList = withContext(Dispatchers.IO) { manager.discoverPairingServices() }
                     if (pairList.isEmpty()) {
+                        step = ""
                         log("未发现配对服务，请确保已开启「无线调试」，可点击「使用配对码配对设备」", true)
                         busy = false
                         return@launch
@@ -126,36 +165,44 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                     val p = pairList.first()
                     log("发现配对服务 ${p.host}:${p.port}（${p.instanceName}）")
                     if (code.isBlank()) {
+                        step = ""
                         log("请先输入 6 位配对码", true)
                         busy = false
                         return@launch
                     }
+                    step = "配对中…"
                     log("正在配对…")
                     val paired = withContext(Dispatchers.IO) { manager.pair(p, code.trim()) }
                     if (!paired) {
+                        step = ""
                         log("配对失败，请检查配对码是否正确，并确保手机已弹出配对窗口", true)
                         busy = false
                         return@launch
                     }
+                    step = "连接中…"
                     log("配对成功，正在连接…")
                     val connList = withContext(Dispatchers.IO) { manager.discoverConnectServices() }
                     connecting = connList
                     val c = connList.firstOrNull()
                     if (c == null) {
+                        step = ""
                         log("未发现连接服务，请返回并再次配对", true)
                         busy = false
                         return@launch
                     }
                     val ok = withContext(Dispatchers.IO) { manager.connect(c) }
                     if (!ok) {
+                        step = ""
                         log("连接失败", true)
                         busy = false
                         return@launch
                     }
+                    step = "切换固定端口…"
                     log("连接成功，shell 权限已获得")
                     val port = tcpPort.toIntOrNull() ?: 5555
                     val tcp = withContext(Dispatchers.IO) { manager.enableTcpMode(port) }
                     if (tcp) log("已切换 ADB 固定端口 $port，下次可直接连接")
+                    step = "校验 Shell…"
                     val verify = withContext(Dispatchers.IO) { manager.verifyShell() }
                     if (verify) {
                         log("激活完成")
@@ -163,6 +210,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                     } else {
                         log("连接建立但 shell 校验未通过", true)
                     }
+                    step = ""
                     busy = false
                 }
             },
