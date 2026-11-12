@@ -175,7 +175,7 @@ class ModuleInstaller(
 
     private fun pushFile(f: File, remote: String) {
         try {
-            val key = com.wangucanghai.isposed.adb.KeyStore.loadOrCreate()
+            val key = com.wangucanghai.isposed.adb.AdbKeyStore(context).key()
             com.wangucanghai.isposed.adb.AdbClient(prefs.adbHost, prefs.adbPort, key).use { c ->
                 c.connect()
                 c.push(f.readBytes(), remote)

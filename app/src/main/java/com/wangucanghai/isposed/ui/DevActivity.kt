@@ -46,7 +46,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  *
  * Copyright (C) 2026 万古沧海
  */
-class DevActivity : ComponentActivity() {
+class DevActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

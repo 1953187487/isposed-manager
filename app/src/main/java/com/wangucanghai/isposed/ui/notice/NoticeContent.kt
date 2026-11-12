@@ -8,7 +8,7 @@ package com.wangucanghai.isposed.ui.notice
 object NoticeContent {
 
     /** 协议版本号：内容变更时递增，用于让新版本重新展示须知。 */
-    const val AGREEMENT_VERSION = 2
+    const val AGREEMENT_VERSION = 3
 
     const val USER_AGREEMENT_TITLE = "用户须知协议"
     val USER_AGREEMENT = """

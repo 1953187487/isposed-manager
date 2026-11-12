@@ -54,7 +54,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  *
  * Copyright (C) 2026 万古沧海
  */
-class ConvertActivity : ComponentActivity() {
+class ConvertActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

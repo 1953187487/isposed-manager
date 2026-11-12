@@ -63,6 +63,12 @@ class AppPrefs(context: Context) {
         get() = sp.getBoolean("ai_notice_accepted", false)
         set(v) = sp.edit().putBoolean("ai_notice_accepted", v).apply()
 
+    // ---------- language ----------
+    /** 界面语言：system / zh / en。 */
+    var appLanguage: String
+        get() = sp.getString("app_language", "system") ?: "system"
+        set(v) = sp.edit().putString("app_language", v).apply()
+
     // ---------- update ----------
     var lastCheckedVersion: String
         get() = sp.getString("last_checked_version", "") ?: ""
@@ -71,6 +77,16 @@ class AppPrefs(context: Context) {
     var lastUpdateNotes: String
         get() = sp.getString("last_update_notes", "") ?: ""
         set(v) = sp.edit().putString("last_update_notes", v).apply()
+
+    /** 已安装但尚未展示的更新公告版本号，空串表示无待展示公告。 */
+    var pendingChangelogVersion: String
+        get() = sp.getString("pending_changelog_version", "") ?: ""
+        set(v) = sp.edit().putString("pending_changelog_version", v).apply()
+
+    /** 待展示的更新公告正文。 */
+    var pendingChangelogNotes: String
+        get() = sp.getString("pending_changelog_notes", "") ?: ""
+        set(v) = sp.edit().putString("pending_changelog_notes", v).apply()
 
     // ---------- auto-converted adapters (install-time module conversion) ----------
     /** Adapter descriptor JSON for a module id that was auto-converted on install. */

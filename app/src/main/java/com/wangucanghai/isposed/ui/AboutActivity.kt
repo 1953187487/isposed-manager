@@ -36,9 +36,9 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Update
-import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,7 +69,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  *
  * Copyright (C) 2026 万古沧海
  */
-class AboutActivity : ComponentActivity() {
+class AboutActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,18 +85,17 @@ class AboutActivity : ComponentActivity() {
 }
 
 private val LSPOSED_BRAND = Color(0xFFF48FB1)
-private val LSPOSED_REPO = "https://github.com/LSPosed/LSPosed"
 
 private data class RewrittenFeature(val icon: ImageVector, val title: String, val desc: String)
 
 private val REWRITTEN_FEATURES = listOf(
     RewrittenFeature(Icons.Filled.Build, "模块检测与管理", "基于 LSPosed 守护进程接口，重新实现模块发现、启停与状态管理"),
     RewrittenFeature(Icons.Filled.CheckCircle, "作用域配置", "逐应用作用域选择与持久化，重写为本地数据驱动"),
-    RewrittenFeature(Icons.Filled.Wifi, "无线调试激活", "免 Root 通过 ADB 无线配对激活，全程无需 Magisk"),
-    RewrittenFeature(Icons.Filled.Terminal, "Shell 终端", "内置终端，可对已激活设备直接执行命令"),
+    RewrittenFeature(Icons.Filled.RocketLaunch, "三通道激活", "无线调试配对、明文 TCP 直连、命令解析三条激活通道，共用同一持久化 ADB 身份"),
+    RewrittenFeature(Icons.Filled.Terminal, "Shell 与调试", "内置终端直连设备执行命令，模块推送、安装与作用域下发全部走本地数据通道"),
     RewrittenFeature(Icons.Filled.AutoAwesome, "AI 转换", "一键将现有 Xposed 模块源码转换为可安装工程"),
     RewrittenFeature(Icons.Filled.Code, "AI 开发", "由 AI 直接生成完整的 LSPosed 模块工程"),
-    RewrittenFeature(Icons.Filled.Update, "应用内更新", "检查、下载并安装最新正式版"),
+    RewrittenFeature(Icons.Filled.Update, "更新与引导", "进入即检测新版本，更新后自动展示公告并重新走一遍协议引导"),
 )
 
 @Composable

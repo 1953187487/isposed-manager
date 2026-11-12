@@ -23,7 +23,7 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
  *
  * Copyright (C) 2026 万古沧海
  */
-class ActivationActivity : ComponentActivity() {
+class ActivationActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

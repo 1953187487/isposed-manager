@@ -102,7 +102,7 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
         scope.launch {
             try {
                 val zipPath = withContext(Dispatchers.IO) { copyToCache(context, uri) }
-                val installer = ModuleInstaller(context, ShellExecutor(prefs), prefs)
+                val installer = ModuleInstaller(context, ShellExecutor(context, prefs), prefs)
                 val prop = withContext(Dispatchers.IO) { installer.parseModuleProp(zipPath) }
                 if (prop == null) {
                     Toast.makeText(context, "无效的模块包（缺少 module.prop）", Toast.LENGTH_LONG).show()

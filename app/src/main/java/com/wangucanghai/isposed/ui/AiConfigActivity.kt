@@ -30,6 +30,7 @@ import com.wangucanghai.isposed.ui.components.ScaffoldPage
 import com.wangucanghai.isposed.ui.components.SectionCard
 import com.wangucanghai.isposed.ui.components.SectionTitle
 import com.wangucanghai.isposed.ui.components.SpacerH
+import com.wangucanghai.isposed.ui.notice.NoticeContent
 import com.wangucanghai.isposed.ui.theme.IsposedTheme
 import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +47,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  *
  * Copyright (C) 2026 万古沧海
  */
-class AiConfigActivity : ComponentActivity() {
+class AiConfigActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -181,6 +182,16 @@ private fun AiConfigContent() {
                 modifier = Modifier.verticalScroll(rememberScrollState()),
             )
         }
+    }
+    SpacerH(16)
+    SectionTitle("AI 使用须知")
+    SectionCard {
+        Text(
+            text = NoticeContent.AI_NOTICE,
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+            modifier = Modifier.verticalScroll(rememberScrollState()),
+        )
     }
     SpacerH(28)
 }

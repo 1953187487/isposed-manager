@@ -41,7 +41,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  *
  * Copyright (C) 2026 万古沧海
  */
-class UpdateActivity : ComponentActivity() {
+class UpdateActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,8 +57,8 @@ class UpdateActivity : ComponentActivity() {
 }
 
 private fun versionName(context: android.content.Context): String = try {
-    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.2"
-} catch (_: Exception) { "1.0.2" }
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.4"
+} catch (_: Exception) { "1.0.4" }
 
 @Composable
 private fun UpdateContent() {
@@ -121,6 +121,12 @@ private fun UpdateContent() {
                             downloading = false
                             if (!ok) {
                                 Toast.makeText(context, "无法调起安装，请开启「允许安装未知应用」", Toast.LENGTH_LONG).show()
+                            } else {
+                                // The announcement is shown on the next launch, right
+                                // before the agreement onboarding flow.
+                                prefs.pendingChangelogVersion = info!!.latestVersion
+                                prefs.pendingChangelogNotes = info!!.notes
+                                Toast.makeText(context, "安装已启动，更新后将展示更新公告", Toast.LENGTH_LONG).show()
                             }
                         }
                     },

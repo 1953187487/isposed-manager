@@ -47,7 +47,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  *
  * Copyright (C) 2026 万古沧海
  */
-class ShellActivity : ComponentActivity() {
+class ShellActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,7 +87,7 @@ private fun ShellContent() {
             running = true
             output = "> $c\n"
             scope.launch {
-                val shell = ShellExecutor(AppPrefs(context))
+                val shell = ShellExecutor(context, AppPrefs(context))
                 val r = withContext(Dispatchers.IO) { shell.exec(c) }
                 output = "> $c\n\n${r.output}"
                 running = false

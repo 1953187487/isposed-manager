@@ -45,7 +45,7 @@ import kotlinx.coroutines.withContext
  *
  * Copyright (C) 2026 万古沧海
  */
-class ModuleScopeActivity : ComponentActivity() {
+class ModuleScopeActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

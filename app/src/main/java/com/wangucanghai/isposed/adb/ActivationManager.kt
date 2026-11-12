@@ -26,7 +26,10 @@ class ActivationManager(private val context: Context) {
     private val keys = AdbKeyStore(context)
 
     @Volatile
-    private var client: AdbTlsClient? = null
+    private var tlsClient: AdbTlsClient? = null
+
+    @Volatile
+    private var tcpClient: AdbClient? = null
 
     @Volatile
     private var active = false
@@ -78,7 +81,7 @@ class ActivationManager(private val context: Context) {
             Logger.i("connect verified: $out")
             if (out.contains("ISPOSED_OK")) {
                 synchronized(lock) {
-                    client = c
+                    tlsClient = c
                     active = true
                 }
                 prefs.adbHost = service.host
@@ -97,22 +100,37 @@ class ActivationManager(private val context: Context) {
         }
     }
 
-    /** Connect directly to a known TCP port (e.g. fixed 5555 after tcpip switch). */
+    /**
+     * Connect directly to a known plain-ADB TCP port (e.g. fixed 5555 after
+     * `adb tcpip`). Uses the persistent ADB key so a previously paired device
+     * authorizes us without needing wireless pairing again.
+     */
     fun connectTcp(host: String, port: Int): Boolean {
         closeClient()
-        val c = AdbTlsClient(host, port, keys)
+        val h = host.trim()
+        val p = port
+        if (h.isEmpty() || p !in 1..65535) {
+            Logger.e("connectTcp invalid target $h:$p")
+            return false
+        }
         return try {
-            c.connect(pairing = false)
-            if (!c.isAuthenticated) return false
+            val c = AdbClient(h, p, keys.key())
+            c.connect()
+            if (!c.isAuthenticated) {
+                c.close()
+                Logger.e("connectTcp not authenticated (key not yet authorized on device)")
+                return false
+            }
             val out = c.shell("echo ISPOSED_OK && id")
             if (out.contains("ISPOSED_OK")) {
                 synchronized(lock) {
-                    client = c
+                    tcpClient = c
                     active = true
                 }
-                prefs.adbHost = host
-                prefs.adbPort = port
+                prefs.adbHost = h
+                prefs.adbPort = p
                 prefs.adbPaired = true
+                Logger.i("connectTcp verified $h:$p")
                 true
             } else {
                 c.close()
@@ -120,14 +138,48 @@ class ActivationManager(private val context: Context) {
             }
         } catch (t: Throwable) {
             Logger.e("connectTcp failed: ${t.message}")
-            c.close()
             false
         }
     }
 
+    /**
+     * Activate from a user supplied command such as `adb connect 192.168.1.2:5555`
+     * or a bare `192.168.1.2:5555` endpoint.
+     */
+    fun activateByCommand(command: String): Result<Pair<String, Int>> {
+        val target = parseAdbTarget(command)
+            ?: return Result.failure(IllegalArgumentException("无法解析目标地址，请输入形如 192.168.1.2:5555 的地址"))
+        val host = target.first
+        val port = target.second
+        return if (connectTcp(host, port)) {
+            Result.success(target)
+        } else {
+            Result.failure(IllegalStateException("连接 $host:$port 失败，请确认设备已开启 ADB 调试并已授权本机密钥"))
+        }
+    }
+
+    /** Extract host/port from an `adb connect` command or a raw `host:port` string. */
+    fun parseAdbTarget(command: String): Pair<String, Int>? {
+        val cleaned = command.trim()
+        if (cleaned.isEmpty()) return null
+        val withoutPrefix = cleaned
+            .removePrefix("adb")
+            .trim()
+            .removePrefix("connect")
+            .trim()
+            .trim('"', '\'')
+        val candidate = withoutPrefix.split(" ").lastOrNull()?.trim() ?: return null
+        val idx = candidate.lastIndexOf(':')
+        if (idx <= 0 || idx == candidate.length - 1) return null
+        val host = candidate.substring(0, idx)
+        val port = candidate.substring(idx + 1).toIntOrNull() ?: return null
+        if (host.isEmpty() || port !in 1..65535) return null
+        return host to port
+    }
+
     /** Ask adbd to listen on a fixed TCP port so future activations skip pairing. */
     fun enableTcpMode(port: Int = 5555): Boolean {
-        val c = currentClient() ?: return false
+        val c = currentTlsClient() ?: return false
         return try {
             val ok = c.openTcpPort(port)
             if (ok) prefs.adbPort = port
@@ -141,17 +193,23 @@ class ActivationManager(private val context: Context) {
     fun verifyShell(): Boolean = runShell("echo ISPOSED_OK")?.contains("ISPOSED_OK") == true
 
     fun runShell(command: String): String? {
-        currentClient()?.let { c ->
-            return try {
-                c.shell(command)
+        currentTlsClient()?.let { c ->
+            try {
+                return c.shell(command)
             } catch (t: Throwable) {
                 Logger.w("shell on TLS client failed: ${t.message}")
-                null
             }
         }
-        // Fall back to a fresh TCP connection (fixed-port mode).
+        currentTcpClient()?.let { c ->
+            try {
+                return c.shell(command)
+            } catch (t: Throwable) {
+                Logger.w("shell on TCP client failed: ${t.message}")
+            }
+        }
+        // Fall back to a fresh TCP connection using the persistent ADB key.
         return try {
-            AdbClient(prefs.adbHost, prefs.adbPort, AdbClient.generateKeyPair()).use { c ->
+            AdbClient(prefs.adbHost, prefs.adbPort, keys.key()).use { c ->
                 c.connect()
                 if (!c.isAuthenticated) null else c.shell(command)
             }
@@ -173,12 +231,16 @@ class ActivationManager(private val context: Context) {
         prefs.adbPaired = false
     }
 
-    private fun currentClient(): AdbTlsClient? = synchronized(lock) { client }
+    private fun currentTlsClient(): AdbTlsClient? = synchronized(lock) { tlsClient }
+
+    private fun currentTcpClient(): AdbClient? = synchronized(lock) { tcpClient }
 
     private fun closeClient() {
         synchronized(lock) {
-            client?.close()
-            client = null
+            try { tlsClient?.close() } catch (_: Throwable) {}
+            try { tcpClient?.close() } catch (_: Throwable) {}
+            tlsClient = null
+            tcpClient = null
         }
     }
 }

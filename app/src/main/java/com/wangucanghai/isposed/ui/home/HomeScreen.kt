@@ -1,7 +1,6 @@
 package com.wangucanghai.isposed.ui.home
 
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,17 +14,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DeveloperMode
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.RocketLaunch
-import androidx.compose.material.icons.filled.SystemUpdateAlt
-import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,19 +28,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.data.ModuleRepository
-import com.wangucanghai.isposed.ui.AboutActivity
 import com.wangucanghai.isposed.ui.ActivationActivity
 import com.wangucanghai.isposed.ui.AiConfigActivity
-import com.wangucanghai.isposed.ui.ConvertActivity
-import com.wangucanghai.isposed.ui.DevActivity
-import com.wangucanghai.isposed.ui.ShellActivity
-import com.wangucanghai.isposed.ui.UpdateActivity
 import com.wangucanghai.isposed.ui.components.BetaBadge
 import com.wangucanghai.isposed.ui.components.Dot
 import com.wangucanghai.isposed.ui.components.SectionCard
@@ -58,17 +43,16 @@ import com.wangucanghai.isposed.util.Logger
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * Home dashboard: activation status, quick actions and runtime statistics.
+ * Home dashboard: activation status and runtime statistics.
  *
  * Copyright (C) 2026 万古沧海
  */
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, onModules: () -> Unit = {}) {
+fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val prefs = remember { AppPrefs(context) }
     var moduleTotal by remember { mutableStateOf(0) }
@@ -121,38 +105,6 @@ fun HomeScreen(modifier: Modifier = Modifier, onModules: () -> Unit = {}) {
                 onClick = {
                     context.startActivity(Intent(context, ActivationActivity::class.java))
                 },
-            )
-        }
-
-        item { SectionTitle("快捷操作") }
-        item {
-            QuickActionGrid(
-                actions = listOf(
-                    QuickTile(Icons.Filled.RocketLaunch, "激活") {
-                        context.startActivity(Intent(context, ActivationActivity::class.java))
-                    },
-                    QuickTile(Icons.Filled.Terminal, "终端") {
-                        context.startActivity(Intent(context, ShellActivity::class.java))
-                    },
-                    QuickTile(Icons.Filled.Build, "模块") {
-                        onModules()
-                    },
-                    QuickTile(Icons.Filled.AutoAwesome, "转换") {
-                        context.startActivity(Intent(context, ConvertActivity::class.java))
-                    },
-                    QuickTile(Icons.Filled.DeveloperMode, "开发") {
-                        context.startActivity(Intent(context, DevActivity::class.java))
-                    },
-                    QuickTile(Icons.Filled.SystemUpdateAlt, "更新") {
-                        context.startActivity(Intent(context, UpdateActivity::class.java))
-                    },
-                    QuickTile(Icons.Filled.Info, "配置") {
-                        context.startActivity(Intent(context, AiConfigActivity::class.java))
-                    },
-                    QuickTile(Icons.Filled.Policy, "关于") {
-                        context.startActivity(Intent(context, AboutActivity::class.java))
-                    },
-                ),
             )
         }
 
@@ -231,9 +183,9 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
             SpacerH(10)
             Text(
                 text = if (active) {
-                    "无线调试授权已建立，可管理模块与执行 Shell 命令。"
+                    "激活授权已建立，可管理模块与执行 Shell 命令。"
                 } else {
-                    "点击进入激活页，通过无线调试配对获取 Shell 权限，全程无需 Root。"
+                    "点击进入激活页，通过无线调试、TCP 或命令三种方式获取 Shell 权限，全程无需 Root。"
                 },
                 style = MiuixTheme.textStyles.body2,
                 color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
@@ -245,61 +197,14 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
                     style = MiuixTheme.textStyles.footnote1,
                     color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                 )
+            } else {
+                SpacerH(8)
+                Text(
+                    text = "激活后可解锁「模块」与「日志」功能。",
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                )
             }
-        }
-    }
-}
-
-private data class QuickTile(val icon: ImageVector, val label: String, val onClick: () -> Unit)
-
-@Composable
-private fun QuickActionGrid(actions: List<QuickTile>) {
-    var row = actions.chunked(4)
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        row.forEach { chunk ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                chunk.forEach { tile ->
-                    QuickAction(
-                        icon = tile.icon,
-                        label = tile.label,
-                        modifier = Modifier.weight(1f),
-                        onClick = tile.onClick,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickAction(
-    icon: ImageVector,
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    Surface(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
-        color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 14.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MiuixTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp),
-            )
-            SpacerH(6)
-            Text(
-                text = label,
-                style = MiuixTheme.textStyles.footnote2,
-                color = MiuixTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium,
-            )
         }
     }
 }

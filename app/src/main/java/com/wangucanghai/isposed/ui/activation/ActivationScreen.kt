@@ -1,15 +1,19 @@
 package com.wangucanghai.isposed.ui.activation
 
-import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,8 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothSearching
+import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
@@ -55,17 +62,28 @@ import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * AxManager-style wireless debugging activation screen.
+ * Activation screen with three independent channels:
  *
- * Flow: mDNS discover -> TLS pair (6-digit code) -> TLS connect -> verify shell
- * -> optionally switch adbd to a fixed TCP port. Live log panel shows each step.
+ *  - [ActivationMode.WIRELESS]: mDNS discovery + TLS pairing (Android 11+ wireless debugging)
+ *  - [ActivationMode.TCP]: direct plain-ADB TCP connection to `host:port`
+ *  - [ActivationMode.COMMAND]: paste an `adb connect host:port` command and run it
+ *
+ * All channels authenticate with the persistent ADB identity from `AdbKeyStore`,
+ * so a device that authorized the app once accepts every later channel.
  *
  * Copyright (C) 2026 万古沧海
  */
+enum class ActivationMode(val label: String, val icon: ImageVector) {
+    WIRELESS("无线调试", Icons.Filled.BluetoothSearching),
+    TCP("TCP 激活", Icons.Filled.Lan),
+    COMMAND("命令激活", Icons.Filled.Terminal),
+}
+
 @Composable
 fun ActivationScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -78,10 +96,15 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
     var step by remember { mutableStateOf("") }
     var pairing by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
     var connecting by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
+    var mode by remember { mutableStateOf(ActivationMode.WIRELESS) }
     var codeValue by remember { mutableStateOf(TextFieldValue("")) }
     val code = codeValue.text
     var tcpPortValue by remember { mutableStateOf(TextFieldValue("5555")) }
     val tcpPort = tcpPortValue.text
+    var hostValue by remember { mutableStateOf(TextFieldValue(prefs.adbHost)) }
+    val host = hostValue.text
+    var commandValue by remember { mutableStateOf(TextFieldValue("")) }
+    val command = commandValue.text
     var active by remember { mutableStateOf(prefs.adbPaired) }
 
     val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
@@ -96,6 +119,19 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
         Logger.i(if (error) "Activation: $msg" else "Activation: $msg")
     }
 
+    fun finishSuccess(message: String) {
+        active = true
+        step = ""
+        busy = false
+        log(message)
+    }
+
+    fun finishFailure(message: String) {
+        step = ""
+        busy = false
+        log(message, true)
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -103,10 +139,10 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             .padding(horizontal = 20.dp),
     ) {
         androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
-        Text("无线调试激活", style = MiuixTheme.textStyles.headline2)
+        Text("激活", style = MiuixTheme.textStyles.headline2)
         SpacerH(6)
         Text(
-            text = "全程无需 Root。先开启开发者选项 → 无线调试，配对一次即可。",
+            text = "三种激活通道任选其一，全程无需 Root。",
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
@@ -145,136 +181,177 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                     color = MiuixTheme.colorScheme.primary,
                 )
             }
-        }
-
-        SectionTitle("一键激活")
-        Button(
-            onClick = {
-                scope.launch {
-                    busy = true
-                    events = emptyList()
-                    step = "发现设备…"
-                    log("开始发现无线调试服务…")
-                    val pairList = withContext(Dispatchers.IO) { manager.discoverPairingServices() }
-                    if (pairList.isEmpty()) {
-                        step = ""
-                        log("未发现配对服务，请确保已开启「无线调试」，可点击「使用配对码配对设备」", true)
-                        busy = false
-                        return@launch
-                    }
-                    pairing = pairList
-                    val p = pairList.first()
-                    log("发现配对服务 ${p.host}:${p.port}（${p.instanceName}）")
-                    if (code.isBlank()) {
-                        step = ""
-                        log("请先输入 6 位配对码", true)
-                        busy = false
-                        return@launch
-                    }
-                    step = "配对中…"
-                    log("正在配对…")
-                    val paired = withContext(Dispatchers.IO) { manager.pair(p, code.trim()) }
-                    if (!paired) {
-                        step = ""
-                        log("配对失败，请检查配对码是否正确，并确保手机已弹出配对窗口", true)
-                        busy = false
-                        return@launch
-                    }
-                    step = "连接中…"
-                    log("配对成功，正在连接…")
-                    val connList = withContext(Dispatchers.IO) { manager.discoverConnectServices() }
-                    connecting = connList
-                    val c = connList.firstOrNull()
-                    if (c == null) {
-                        step = ""
-                        log("未发现连接服务，请返回并再次配对", true)
-                        busy = false
-                        return@launch
-                    }
-                    val ok = withContext(Dispatchers.IO) { manager.connect(c) }
-                    if (!ok) {
-                        step = ""
-                        log("连接失败", true)
-                        busy = false
-                        return@launch
-                    }
-                    step = "切换固定端口…"
-                    log("连接成功，shell 权限已获得")
-                    val port = tcpPort.toIntOrNull() ?: 5555
-                    val tcp = withContext(Dispatchers.IO) { manager.enableTcpMode(port) }
-                    if (tcp) log("已切换 ADB 固定端口 $port，下次可直接连接")
-                    step = "校验 Shell…"
-                    val verify = withContext(Dispatchers.IO) { manager.verifyShell() }
-                    if (verify) {
-                        log("激活完成")
-                        active = true
-                    } else {
-                        log("连接建立但 shell 校验未通过", true)
-                    }
-                    step = ""
-                    busy = false
-                }
-            },
-            enabled = !busy,
-            cornerRadius = 14.dp,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            if (busy) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                SpacerH(4)
-                Text("激活中…")
-            } else {
-                Icon(Icons.Filled.RocketLaunch, contentDescription = null, modifier = Modifier.size(18.dp))
-                SpacerH(4)
-                Text("开始激活")
+            if (active) {
+                SpacerH(6)
+                TextButton(
+                    text = "断开连接",
+                    onClick = {
+                        manager.deactivate()
+                        active = false
+                        log("已断开 ADB 连接")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    cornerRadius = 14.dp,
+                )
             }
         }
-        SpacerH(8)
-        Button(
-            onClick = {
-                scope.launch {
-                    busy = true
-                    log("尝试直接连接固定端口 ${prefs.adbHost}:${prefs.adbPort}…")
-                    val ok = withContext(Dispatchers.IO) {
-                        manager.connectTcp(prefs.adbHost, prefs.adbPort)
-                    }
-                    log(if (ok) "固定端口连接成功" else "固定端口连接失败（需先无线激活一次）", !ok)
-                    active = ok
-                    busy = false
-                }
+
+        SectionTitle("激活方式")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ActivationMode.entries.forEach { m ->
+                ModeChip(
+                    mode = m,
+                    selected = mode == m,
+                    onClick = { mode = m },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        SpacerH(12)
+
+        AnimatedContent(
+            targetState = mode,
+            transitionSpec = {
+                (slideInHorizontally(tween(260)) { it / 4 } + fadeIn(tween(260)))
+                    .togetherWith(
+                        slideOutHorizontally(tween(220)) { -it / 4 } + fadeOut(tween(220)),
+                    )
             },
-            enabled = !busy,
-            cornerRadius = 14.dp,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
-            SpacerH(4)
-            Text("连接固定端口 ${prefs.adbHost}:${prefs.adbPort}")
+            label = "activationMode",
+        ) { current ->
+            when (current) {
+                ActivationMode.WIRELESS -> WirelessPanel(
+                    busy = busy,
+                    code = code,
+                    onCodeChange = { codeValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(6)) },
+                    tcpPort = tcpPort,
+                    onTcpPortChange = { tcpPortValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(5)) },
+                    onStart = {
+                        scope.launch {
+                            busy = true
+                            events = emptyList()
+                            step = "发现设备…"
+                            log("开始发现无线调试服务…")
+                            val pairList = withContext(Dispatchers.IO) { manager.discoverPairingServices() }
+                            if (pairList.isEmpty()) {
+                                step = ""
+                                log(
+                                    "未发现配对服务。请确认「开发者选项 → 无线调试」已开启，" +
+                                        "并与本机处于同一局域网；也可改用 TCP 激活或命令激活。",
+                                    true,
+                                )
+                                busy = false
+                                return@launch
+                            }
+                            pairing = pairList
+                            val p = pairList.first()
+                            log("发现配对服务 ${p.host}:${p.port}（${p.instanceName}）")
+                            if (code.isBlank()) {
+                                step = ""
+                                log("请先输入 6 位配对码", true)
+                                busy = false
+                                return@launch
+                            }
+                            step = "配对中…"
+                            log("正在配对…")
+                            val paired = withContext(Dispatchers.IO) { manager.pair(p, code.trim()) }
+                            if (!paired) {
+                                step = ""
+                                log("配对失败，请检查配对码是否正确，并确保手机已弹出配对窗口", true)
+                                busy = false
+                                return@launch
+                            }
+                            step = "连接中…"
+                            log("配对成功，正在连接…")
+                            val connList = withContext(Dispatchers.IO) { manager.discoverConnectServices() }
+                            connecting = connList
+                            val c = connList.firstOrNull()
+                            if (c == null) {
+                                step = ""
+                                log("未发现连接服务，请返回并再次配对", true)
+                                busy = false
+                                return@launch
+                            }
+                            val ok = withContext(Dispatchers.IO) { manager.connect(c) }
+                            if (!ok) {
+                                step = ""
+                                log("连接失败", true)
+                                busy = false
+                                return@launch
+                            }
+                            step = "切换固定端口…"
+                            log("连接成功，shell 权限已获得")
+                            val port = tcpPort.toIntOrNull() ?: 5555
+                            val tcp = withContext(Dispatchers.IO) { manager.enableTcpMode(port) }
+                            if (tcp) log("已切换 ADB 固定端口 $port，下次可用 TCP 激活直连")
+                            step = "校验 Shell…"
+                            val verify = withContext(Dispatchers.IO) { manager.verifyShell() }
+                            if (verify) {
+                                finishSuccess("激活完成")
+                            } else {
+                                finishFailure("连接建立但 shell 校验未通过")
+                            }
+                        }
+                    },
+                )
+
+                ActivationMode.TCP -> TcpPanel(
+                    busy = busy,
+                    host = host,
+                    onHostChange = { hostValue = it },
+                    port = tcpPort,
+                    onPortChange = { tcpPortValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(5)) },
+                    onStart = {
+                        scope.launch {
+                            busy = true
+                            events = emptyList()
+                            val port = tcpPort.toIntOrNull()
+                            if (port == null || port !in 1..65535) {
+                                finishFailure("端口无效，请输入 1-65535 之间的数字")
+                                return@launch
+                            }
+                            step = "TCP 连接中…"
+                            log("正在连接 ${host.trim()}:$port …")
+                            val ok = withContext(Dispatchers.IO) { manager.connectTcp(host.trim(), port) }
+                            if (ok) {
+                                finishSuccess("TCP 激活成功，shell 权限已获得")
+                            } else {
+                                finishFailure(
+                                    "TCP 连接失败。请确认设备已开启 ADB 调试并监听该端口，" +
+                                        "且本机密钥已在设备上授权（可先完成一次无线调试激活）。",
+                                )
+                            }
+                        }
+                    },
+                )
+
+                ActivationMode.COMMAND -> CommandPanel(
+                    busy = busy,
+                    command = command,
+                    onCommandChange = { commandValue = it },
+                    onStart = {
+                        scope.launch {
+                            busy = true
+                            events = emptyList()
+                            step = "解析命令…"
+                            log("正在解析命令：${command.trim()}")
+                            val result = withContext(Dispatchers.IO) { manager.activateByCommand(command) }
+                            result.fold(
+                                onSuccess = { (h, p) ->
+                                    finishSuccess("命令激活成功，已连接 $h:$p")
+                                },
+                                onFailure = {
+                                    finishFailure(it.message ?: "命令激活失败")
+                                },
+                            )
+                        }
+                    },
+                )
+            }
         }
 
-        SectionTitle("配对码")
-        TextField(
-            value = codeValue,
-            onValueChange = { codeValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(6)) },
-            modifier = Modifier.fillMaxWidth(),
-            label = "6 位配对码（手机无线调试窗口显示）",
-            useLabelAsPlaceholder = true,
-            singleLine = true,
-            cornerRadius = 14.dp,
-        )
-        SpacerH(8)
-        TextField(
-            value = tcpPortValue,
-            onValueChange = { tcpPortValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(5)) },
-            modifier = Modifier.fillMaxWidth(),
-            label = "固定 TCP 端口（默认 5555）",
-            useLabelAsPlaceholder = true,
-            singleLine = true,
-            cornerRadius = 14.dp,
-        )
-
-        SectionTitle("发现的服务")
-        if (pairing.isNotEmpty()) {
+        if (pairing.isNotEmpty() && mode == ActivationMode.WIRELESS) {
+            SectionTitle("发现的服务")
             Text("配对服务", style = MiuixTheme.textStyles.footnote2)
             pairing.forEach { svc ->
                 Text(
@@ -284,9 +361,8 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
-        if (connecting.isNotEmpty()) {
-            SpacerH(6)
-            Text("连接服务", style = MiuixTheme.textStyles.footnote2)
+        if (connecting.isNotEmpty() && mode == ActivationMode.WIRELESS) {
+            SectionTitle("连接服务")
             connecting.forEach { svc ->
                 Text(
                     "${svc.instanceName}  ${svc.host}:${svc.port}",
@@ -325,5 +401,193 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             }
         }
         androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = 28.dp))
+    }
+}
+
+@Composable
+private fun ModeChip(
+    mode: ActivationMode,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = if (selected) MiuixTheme.colorScheme.primaryContainer
+        else MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        contentColor = if (selected) MiuixTheme.colorScheme.onPrimaryContainer
+        else MiuixTheme.colorScheme.onSurfaceContainerVariant,
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(mode.icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            SpacerH(4)
+            Text(mode.label, style = MiuixTheme.textStyles.footnote2)
+        }
+    }
+}
+
+@Composable
+private fun WirelessPanel(
+    busy: Boolean,
+    code: String,
+    onCodeChange: (TextFieldValue) -> Unit,
+    tcpPort: String,
+    onTcpPortChange: (TextFieldValue) -> Unit,
+    onStart: () -> Unit,
+) {
+    SectionCard {
+        Text("无线调试激活", style = MiuixTheme.textStyles.title3)
+        SpacerH(6)
+        Text(
+            text = "适用于 Android 11 及以上。依次开启「开发者选项 → 无线调试」，" +
+                "在「使用配对码配对设备」中获取 6 位配对码并填入下方。",
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+        )
+        SpacerH(12)
+        TextField(
+            value = TextFieldValue(code),
+            onValueChange = onCodeChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = "6 位配对码",
+            useLabelAsPlaceholder = true,
+            singleLine = true,
+            cornerRadius = 14.dp,
+        )
+        SpacerH(10)
+        TextField(
+            value = TextFieldValue(tcpPort),
+            onValueChange = onTcpPortChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = "固定 TCP 端口（默认 5555）",
+            useLabelAsPlaceholder = true,
+            singleLine = true,
+            cornerRadius = 14.dp,
+        )
+        SpacerH(12)
+        Button(
+            onClick = onStart,
+            enabled = !busy,
+            cornerRadius = 14.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            if (busy) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                SpacerH(4)
+                Text("激活中…")
+            } else {
+                Icon(Icons.Filled.RocketLaunch, contentDescription = null, modifier = Modifier.size(18.dp))
+                SpacerH(4)
+                Text("开始无线调试激活")
+            }
+        }
+    }
+}
+
+@Composable
+private fun TcpPanel(
+    busy: Boolean,
+    host: String,
+    onHostChange: (TextFieldValue) -> Unit,
+    port: String,
+    onPortChange: (TextFieldValue) -> Unit,
+    onStart: () -> Unit,
+) {
+    SectionCard {
+        Text("TCP 激活", style = MiuixTheme.textStyles.title3)
+        SpacerH(6)
+        Text(
+            text = "设备已通过「adb tcpip 端口」开启明文 ADB 调试时使用，直接填入设备 IP 与端口即可连接，无需再次配对。",
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+        )
+        SpacerH(12)
+        TextField(
+            value = TextFieldValue(host),
+            onValueChange = onHostChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = "设备 IP / 主机名",
+            useLabelAsPlaceholder = true,
+            singleLine = true,
+            cornerRadius = 14.dp,
+        )
+        SpacerH(10)
+        TextField(
+            value = TextFieldValue(port),
+            onValueChange = onPortChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = "端口（默认 5555）",
+            useLabelAsPlaceholder = true,
+            singleLine = true,
+            cornerRadius = 14.dp,
+        )
+        SpacerH(12)
+        Button(
+            onClick = onStart,
+            enabled = !busy,
+            cornerRadius = 14.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            if (busy) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                SpacerH(4)
+                Text("连接中…")
+            } else {
+                Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+                SpacerH(4)
+                Text("连接 TCP 设备")
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommandPanel(
+    busy: Boolean,
+    command: String,
+    onCommandChange: (TextFieldValue) -> Unit,
+    onStart: () -> Unit,
+) {
+    SectionCard {
+        Text("命令激活", style = MiuixTheme.textStyles.title3)
+        SpacerH(6)
+        Text(
+            text = "直接输入 ADB 连接命令，例如 adb connect 192.168.1.2:5555，" +
+                "也可只填 192.168.1.2:5555。应用会解析地址并完成 TCP 激活。",
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+        )
+        SpacerH(12)
+        TextField(
+            value = TextFieldValue(command),
+            onValueChange = onCommandChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = "adb connect 主机:端口",
+            useLabelAsPlaceholder = true,
+            singleLine = true,
+            cornerRadius = 14.dp,
+        )
+        SpacerH(12)
+        Button(
+            onClick = onStart,
+            enabled = !busy,
+            cornerRadius = 14.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            if (busy) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                SpacerH(4)
+                Text("执行中…")
+            } else {
+                Icon(Icons.Filled.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
+                SpacerH(4)
+                Text("执行激活命令")
+            }
+        }
     }
 }

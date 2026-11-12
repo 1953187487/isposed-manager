@@ -110,7 +110,7 @@ class ModulesFragment : Fragment() {
             uri ?: return@registerForActivityResult
             CoroutineScope(Dispatchers.Main).launch {
                 val zipPath = copyToCache(uri)
-                val installer = ModuleInstaller(requireContext(), ShellExecutor(prefs), prefs)
+                val installer = ModuleInstaller(requireContext(), ShellExecutor(requireContext(), prefs), prefs)
                 val prop = withContext(Dispatchers.IO) { installer.parseModuleProp(zipPath) }
                 if (prop == null) {
                     Toast.makeText(requireContext(), "无效的模块包（缺少 module.prop）", Toast.LENGTH_LONG).show()

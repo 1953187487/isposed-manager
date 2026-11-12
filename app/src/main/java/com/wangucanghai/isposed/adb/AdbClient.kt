@@ -37,6 +37,7 @@ class AdbClient(
     private var input: DataInputStream? = null
     private var output: DataOutputStream? = null
     private var authed = false
+    private var localId = 0
 
     val isAuthenticated get() = authed
 
@@ -156,7 +157,8 @@ class AdbClient(
 
     private fun openService(service: String): Pair<InputStream, OutputStream> {
         val dout = output!!
-        sendPacket(CMD_OPEN, 1, 0, service.toByteArray(Charsets.UTF_8))
+        val id = ++localId
+        sendPacket(CMD_OPEN, id, 0, service.toByteArray(Charsets.UTF_8))
         val payload = ByteArray(0)
         var (cmd, _, _, _) = readPacket()
         if (cmd != CMD_OKAY) throw IOException("Service open failed for $service (cmd=$cmd)")
