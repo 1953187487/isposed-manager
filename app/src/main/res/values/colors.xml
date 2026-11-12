@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand">#FF3B5C</color>
+    <color name="brand_dark">#C22744</color>
+    <color name="brand_light">#FFE1E6</color>
+    <color name="accent">#FF7A59</color>
+    <color name="success">#2E7D32</color>
+    <color name="warning">#ED6C02</color>
+    <color name="surface_soft">#FFF7F8</color>
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#666666</color>
+    <color name="divider">#EEEEEE</color>
+    <color name="white">#FFFFFF</color>
+</resources>

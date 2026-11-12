@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Isposed Manager</string>
+    <string name="app_name_cn">Isposed Manager</string>
+
+    <!-- navigation -->
+    <string name="nav_home">首页</string>
+    <string name="nav_modules">模块</string>
+    <string name="nav_logs">日志</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- home -->
+    <string name="home_status_title">运行状态</string>
+    <string name="home_status_active">已激活 · 免root</string>
+    <string name="home_status_inactive">未激活</string>
+    <string name="home_status_rootless">无线调试（免root）</string>
+    <string name="home_activate">一键激活</string>
+    <string name="home_pair">无线配对</string>
+    <string name="home_modules_count">已装模块</string>
+    <string name="home_enabled_count">已启用</string>
+    <string name="home_scope_count">作用域</string>
+    <string name="home_stat_ai">AI 模块开发</string>
+    <string name="home_stat_convert">AI 转换模块</string>
+    <string name="home_stat_shell">Shell 终端</string>
+    <string name="home_stat_update">检查更新</string>
+
+    <!-- modules -->
+    <string name="modules_title">模块</string>
+    <string name="modules_empty">未发现 Xposed/LSPosed 模块</string>
+    <string name="modules_ai_dev">AI 开发</string>
+    <string name="modules_ai_convert">AI 转换</string>
+    <string name="modules_install">安装模块</string>
+    <string name="module_enabled">已启用</string>
+    <string name="module_disabled">已停用</string>
+    <string name="module_scope">作用域</string>
+    <string name="module_version">v%1$s</string>
+
+    <!-- logs -->
+    <string name="logs_title">日志</string>
+    <string name="logs_empty">暂无日志</string>
+    <string name="logs_clear">清空</string>
+
+    <!-- settings -->
+    <string name="settings_title">设置</string>
+    <string name="settings_section_main">常规</string>
+    <string name="settings_section_ai">AI 功能</string>
+    <string name="settings_section_about">关于</string>
+    <string name="settings_ai_config">AI 服务商 API 配置</string>
+    <string name="settings_ai_notice">AI 使用须知</string>
+    <string name="settings_user_agreement">用户须知协议</string>
+    <string name="settings_update">检查更新</string>
+    <string name="settings_author">开发作者</string>
+    <string name="settings_about">关于 / 开源许可</string>
+    <string name="settings_shell">Shell 终端 (WebUI)</string>
+    <string name="settings_author_value">万古沧海 · B站同名</string>
+
+    <!-- AI config -->
+    <string name="ai_config">AI 服务商 API 配置</string>
+    <string name="ai_base_url">Base URL</string>
+    <string name="ai_api_key">API Key</string>
+    <string name="ai_model">模型</string>
+    <string name="ai_temperature">Temperature</string>
+    <string name="ai_pull_models">拉取模型</string>
+    <string name="ai_test_model">测试模型</string>
+    <string name="ai_save">保存</string>
+
+    <!-- convert -->
+    <string name="ai_convert_title">AI 转换模块</string>
+    <string name="ai_convert_hint">选择要转换的 Isposed 模块，转换为本软件适配模块</string>
+    <string name="ai_convert_pick">选择模块</string>
+    <string name="ai_convert_start">开始转换</string>
+
+    <!-- dev -->
+    <string name="ai_dev_title">AI 直接开发</string>
+    <string name="ai_dev_hint">描述你想要的模块功能，AI 直接生成可编译的 LSPosed 模块</string>
+    <string name="ai_dev_generate">AI 生成</string>
+
+    <!-- scope -->
+    <string name="scope_title">模块作用域</string>
+    <string name="scope_save">保存</string>
+    <string name="scope_android">系统框架</string>
+
+    <!-- about -->
+    <string name="about_title">关于 / 开源许可</string>
+    <string name="about_dev_author">开发作者</string>
+    <string name="about_upstream">上游开源项目</string>
+    <string name="about_license">开源许可</string>
+    <string name="about_third_party">第三方开源声明</string>
+    <string name="about_open_agreement">开源二改协议说明</string>
+    <string name="about_desc">基于 LSPosed 与 AxManager 开发的免 root 管理器，严格遵守两个项目的开源二改协议。</string>
+
+    <!-- update -->
+    <string name="update_title">检查更新</string>
+    <string name="update_checking">正在检查更新…</string>
+    <string name="update_current">当前版本 v%1$s</string>
+    <string name="update_latest">最新版本 v%1$s</string>
+    <string name="update_none">已是最新版本</string>
+    <string name="update_found">发现新版本</string>
+    <string name="update_download">前往下载</string>
+
+    <!-- shell -->
+    <string name="shell_title">Shell 终端</string>
+    <string name="shell_run">运行</string>
+    <string name="shell_hint">输入命令，如：id / getprop ro.build.version.release</string>
+
+    <!-- common -->
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="refresh">刷新</string>
+    <string name="loading">加载中…</string>
+    <string name="error">错误</string>
+</resources>
