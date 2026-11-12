@@ -14,13 +14,14 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,6 +51,13 @@ import com.wangucanghai.isposed.ui.theme.IsposedTheme
 import com.wangucanghai.isposed.update.UpdateChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.NavigationBar
+import top.yukonga.miuix.kmp.basic.NavigationBarItem
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.Text
 
 /**
  * Single-activity Compose host with bottom navigation and mandatory agreement gate.
@@ -107,8 +115,8 @@ private fun MainScaffold() {
                     NavigationBarItem(
                         selected = selected == i,
                         onClick = { selected = i },
-                        icon = { Icon(tab.icon, contentDescription = tab.label) },
-                        label = { Text(tab.label) },
+                        icon = tab.icon,
+                        label = tab.label,
                     )
                 }
             }
@@ -116,16 +124,20 @@ private fun MainScaffold() {
     ) { inner ->
         androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
             val up = updateInfo
-            if (up != null && up.hasUpdate) {
+            AnimatedVisibility(
+                visible = up != null && up.hasUpdate,
+                enter = fadeIn(tween(280)) + slideInVertically(tween(280)) { it / 3 },
+                exit = fadeOut(tween(220)) + shrinkVertically(tween(220)),
+            ) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 12.dp)
-                        .clickable { context.startActivity(android.content.Intent(context, UpdateActivity::class.java)) },
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MiuixTheme.colorScheme.tertiaryContainer,
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp),
+                    cornerRadius = 16.dp,
+                    colors = CardDefaults.defaultColors(
+                        color = MiuixTheme.colorScheme.tertiaryContainer,
                     ),
+                    onClick = { context.startActivity(android.content.Intent(context, UpdateActivity::class.java)) },
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(14.dp),
@@ -139,7 +151,7 @@ private fun MainScaffold() {
                         Spacer(Modifier.width(10.dp))
                         androidx.compose.foundation.layout.Column {
                             Text(
-                                "发现新版本 v${up.latestVersion}",
+                                "发现新版本 v${up?.latestVersion}",
                                 style = MiuixTheme.textStyles.title3,
                                 color = MiuixTheme.colorScheme.onTertiaryContainer,
                             )
@@ -152,11 +164,13 @@ private fun MainScaffold() {
                     }
                 }
             }
-            when (selected) {
-                0 -> HomeScreen(Modifier.padding(inner).fillMaxWidth(), onModules = { selected = 1 })
-                1 -> ModulesScreen(Modifier.padding(inner))
-                2 -> LogsScreen(Modifier.padding(inner))
-                else -> SettingsScreen(Modifier.padding(inner))
+            Crossfade(targetState = selected, animationSpec = tween(260)) { tab ->
+                when (tab) {
+                    0 -> HomeScreen(Modifier.padding(inner).fillMaxWidth(), onModules = { selected = 1 })
+                    1 -> ModulesScreen(Modifier.padding(inner))
+                    2 -> LogsScreen(Modifier.padding(inner))
+                    else -> SettingsScreen(Modifier.padding(inner))
+                }
             }
         }
     }

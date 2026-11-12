@@ -13,12 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Science
-import androidx.compose.material3.Button
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -28,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.ai.AiClient
 import com.wangucanghai.isposed.core.AppPrefs
@@ -40,6 +35,11 @@ import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.Button
+import top.yukonga.miuix.kmp.basic.Slider
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * AI service provider config: pull models & test model.
@@ -68,39 +68,39 @@ private fun AiConfigContent() {
     val prefs = remember { AppPrefs(context) }
     val client = remember { AiClient(context) }
 
-    var baseUrl by remember { mutableStateOf(prefs.aiBaseUrl) }
-    var apiKey by remember { mutableStateOf(prefs.aiApiKey) }
-    var model by remember { mutableStateOf(prefs.aiModel) }
+    var baseUrl by remember { mutableStateOf(TextFieldValue(prefs.aiBaseUrl)) }
+    var apiKey by remember { mutableStateOf(TextFieldValue(prefs.aiApiKey)) }
+    var model by remember { mutableStateOf(TextFieldValue(prefs.aiModel)) }
     var temp by remember { mutableFloatStateOf(prefs.aiTemperature) }
     var result by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
 
     SectionCard {
-        OutlinedTextField(
+        TextField(
             value = baseUrl,
             onValueChange = { baseUrl = it },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Base URL") },
+            label = "Base URL",
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            cornerRadius = 14.dp,
         )
         SpacerH(10)
-        OutlinedTextField(
+        TextField(
             value = apiKey,
             onValueChange = { apiKey = it },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("API Key") },
+            label = "API Key",
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            cornerRadius = 14.dp,
         )
         SpacerH(10)
-        OutlinedTextField(
+        TextField(
             value = model,
             onValueChange = { model = it },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("模型") },
+            label = "模型",
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            cornerRadius = 14.dp,
         )
         SpacerH(10)
         Text("温度：${"%.2f".format(temp)}", style = MiuixTheme.textStyles.footnote1)
@@ -114,47 +114,47 @@ private fun AiConfigContent() {
     SpacerH(16)
     Button(
         onClick = {
-            prefs.aiBaseUrl = baseUrl.trim()
-            prefs.aiApiKey = apiKey.trim()
-            prefs.aiModel = model.trim()
+            prefs.aiBaseUrl = baseUrl.text.trim()
+            prefs.aiApiKey = apiKey.text.trim()
+            prefs.aiModel = model.text.trim()
             prefs.aiTemperature = temp
             Toast.makeText(context, "已保存", Toast.LENGTH_SHORT).show()
             Logger.i("AI config saved")
         },
-        shape = RoundedCornerShape(14.dp),
+        cornerRadius = 14.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text("保存")
     }
     SpacerH(10)
-    OutlinedButton(
+    Button(
         onClick = {
-            prefs.aiBaseUrl = baseUrl.trim()
-            prefs.aiApiKey = apiKey.trim()
+            prefs.aiBaseUrl = baseUrl.text.trim()
+            prefs.aiApiKey = apiKey.text.trim()
             result = "拉取模型中…"
             busy = true
             scope.launch {
                 val models = withContext(Dispatchers.IO) { runCatching { client.listModels() }.getOrDefault(emptyList()) }
                 result = if (models.isEmpty()) "未获取到模型（检查 Base URL / Key）"
                 else "模型列表：\n" + models.joinToString("\n")
-                if (model.isBlank()) model = models.firstOrNull() ?: ""
+                if (model.text.isBlank()) model = TextFieldValue(models.firstOrNull().orEmpty())
                 busy = false
             }
         },
         enabled = !busy,
-        shape = RoundedCornerShape(14.dp),
+        cornerRadius = 14.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text("拉取模型")
     }
     SpacerH(10)
-    OutlinedButton(
+    Button(
         onClick = {
-            prefs.aiBaseUrl = baseUrl.trim()
-            prefs.aiApiKey = apiKey.trim()
-            prefs.aiModel = model.trim()
-            val m = model.trim()
-            if (m.isEmpty()) { Toast.makeText(context, "请填写模型名", Toast.LENGTH_SHORT).show(); return@OutlinedButton }
+            prefs.aiBaseUrl = baseUrl.text.trim()
+            prefs.aiApiKey = apiKey.text.trim()
+            prefs.aiModel = model.text.trim()
+            val m = model.text.trim()
+            if (m.isEmpty()) { Toast.makeText(context, "请填写模型名", Toast.LENGTH_SHORT).show(); return@Button }
             result = "测试中…"
             busy = true
             scope.launch {
@@ -167,7 +167,7 @@ private fun AiConfigContent() {
             }
         },
         enabled = !busy,
-        shape = RoundedCornerShape(14.dp),
+        cornerRadius = 14.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text("测试模型")

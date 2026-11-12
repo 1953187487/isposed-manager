@@ -15,11 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.data.ModuleRepository
@@ -36,6 +32,11 @@ import com.wangucanghai.isposed.ui.components.ScaffoldPage
 import com.wangucanghai.isposed.ui.components.SpacerH
 import com.wangucanghai.isposed.ui.theme.IsposedTheme
 import kotlinx.coroutines.Dispatchers
+import top.yukonga.miuix.kmp.basic.Button
+import top.yukonga.miuix.kmp.basic.Checkbox
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -92,12 +93,14 @@ private fun ModuleScopeContent(pkg: String) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .animateItem()
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(
-                    checked = app.packageName in selected,
-                    onCheckedChange = { checked ->
+                    state = if (app.packageName in selected) ToggleableState.On else ToggleableState.Off,
+                    onClick = {
+                        val checked = app.packageName !in selected
                         selected = if (checked) selected + app.packageName else selected - app.packageName
                     },
                 )
@@ -121,7 +124,7 @@ private fun ModuleScopeContent(pkg: String) {
                     }
                 },
                 enabled = !saving,
-                shape = RoundedCornerShape(14.dp),
+                cornerRadius = 14.dp,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(Icons.Filled.Save, contentDescription = null)

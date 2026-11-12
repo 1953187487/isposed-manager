@@ -26,15 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothSearching
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.RocketLaunch
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.adb.ActivationManager
 import com.wangucanghai.isposed.adb.MdnsResolver
@@ -58,6 +50,13 @@ import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.Button
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Surface
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * AxManager-style wireless debugging activation screen.
@@ -79,8 +78,10 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
     var step by remember { mutableStateOf("") }
     var pairing by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
     var connecting by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
-    var code by remember { mutableStateOf("") }
-    var tcpPort by remember { mutableStateOf("5555") }
+    var codeValue by remember { mutableStateOf(TextFieldValue("")) }
+    val code = codeValue.text
+    var tcpPortValue by remember { mutableStateOf(TextFieldValue("5555")) }
+    val tcpPort = tcpPortValue.text
     var active by remember { mutableStateOf(prefs.adbPaired) }
 
     val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
@@ -215,7 +216,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                 }
             },
             enabled = !busy,
-            shape = RoundedCornerShape(14.dp),
+            cornerRadius = 14.dp,
             modifier = Modifier.fillMaxWidth(),
         ) {
             if (busy) {
@@ -229,7 +230,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             }
         }
         SpacerH(8)
-        OutlinedButton(
+        Button(
             onClick = {
                 scope.launch {
                     busy = true
@@ -243,7 +244,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                 }
             },
             enabled = !busy,
-            shape = RoundedCornerShape(14.dp),
+            cornerRadius = 14.dp,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -252,22 +253,24 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
         }
 
         SectionTitle("配对码")
-        OutlinedTextField(
-            value = code,
-            onValueChange = { code = it.filter { ch -> ch.isDigit() }.take(6) },
+        TextField(
+            value = codeValue,
+            onValueChange = { codeValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(6)) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("6 位配对码（手机无线调试窗口显示）") },
+            label = "6 位配对码（手机无线调试窗口显示）",
+            useLabelAsPlaceholder = true,
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            cornerRadius = 14.dp,
         )
         SpacerH(8)
-        OutlinedTextField(
-            value = tcpPort,
-            onValueChange = { tcpPort = it.filter { ch -> ch.isDigit() }.take(5) },
+        TextField(
+            value = tcpPortValue,
+            onValueChange = { tcpPortValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(5)) },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("固定 TCP 端口（默认 5555）") },
+            label = "固定 TCP 端口（默认 5555）",
+            useLabelAsPlaceholder = true,
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            cornerRadius = 14.dp,
         )
 
         SectionTitle("发现的服务")

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,18 +25,6 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,8 +35,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -63,6 +54,17 @@ import com.wangucanghai.isposed.ui.ModuleScopeActivity
 import com.wangucanghai.isposed.ui.components.SpacerH
 import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
+import top.yukonga.miuix.kmp.basic.Button
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.FloatingActionButton
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.Surface
+import top.yukonga.miuix.kmp.basic.Switch
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -80,7 +82,8 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
 
     var modules by remember { mutableStateOf<List<ModuleInfo>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
-    var query by remember { mutableStateOf("") }
+    val queryState = remember { TextFieldState() }
+    val query = queryState.text
 
     fun reload() {
         scope.launch {
@@ -123,12 +126,19 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            FloatingActionButton(
                 onClick = { picker.launch("application/zip") },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("安装模块") },
                 shape = RoundedCornerShape(18.dp),
-            )
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    SpacerH(4)
+                    Text("安装模块", style = MiuixTheme.textStyles.button)
+                }
+            }
         },
     ) { inner ->
         Column(modifier = Modifier.padding(inner).fillMaxSize()) {
@@ -140,28 +150,25 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                     color = MiuixTheme.colorScheme.onBackground,
                 )
                 androidx.compose.foundation.layout.Spacer(Modifier.size(12.dp))
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
+                TextField(
+                    state = queryState,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("搜索模块") },
+                    label = "搜索模块",
+                    useLabelAsPlaceholder = true,
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
+                    cornerRadius = 16.dp,
                 )
                 androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = false,
+                    ChipPill(
+                        icon = Icons.Filled.AutoAwesome,
+                        label = "AI 转换",
                         onClick = { context.startActivity(Intent(context, ConvertActivity::class.java)) },
-                        label = { Text("AI 转换") },
-                        leadingIcon = { Icon(Icons.Filled.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp)) },
                     )
-                    FilterChip(
-                        selected = false,
+                    ChipPill(
+                        icon = Icons.Outlined.Code,
+                        label = "AI 开发",
                         onClick = { context.startActivity(Intent(context, DevActivity::class.java)) },
-                        label = { Text("AI 开发") },
-                        leadingIcon = { Icon(Icons.Outlined.Code, contentDescription = null, modifier = Modifier.size(18.dp)) },
                     )
                 }
             }
@@ -186,6 +193,7 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                 ) {
                     items(filtered, key = { it.packageName }) { mod ->
                         ModuleCard(
+                            modifier = Modifier.animateItem(),
                             module = mod,
                             onToggle = { enabled ->
                                 scope.launch {
@@ -214,15 +222,16 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ModuleCard(
+    modifier: Modifier = Modifier,
     module: ModuleInfo,
     onToggle: (Boolean) -> Unit,
     onScope: () -> Unit,
     onConvert: () -> Unit,
 ) {
     Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MiuixTheme.colorScheme.surface),
-        border = CardDefaults.outlinedCardBorder(),
+        modifier = modifier.animateContentSize(),
+        cornerRadius = 20.dp,
+        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surface),
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -260,17 +269,36 @@ private fun ModuleCard(
             }
             androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onScope, shape = RoundedCornerShape(12.dp)) {
+                Button(onClick = onScope, cornerRadius = 12.dp, minHeight = 36.dp) {
                     Icon(Icons.Outlined.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
                     androidx.compose.foundation.layout.Spacer(Modifier.size(4.dp))
                     Text("作用域 (${module.scope.size})")
                 }
-                OutlinedButton(onClick = onConvert, shape = RoundedCornerShape(12.dp)) {
+                Button(onClick = onConvert, cornerRadius = 12.dp, minHeight = 36.dp) {
                     Icon(Icons.Filled.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
                     androidx.compose.foundation.layout.Spacer(Modifier.size(4.dp))
                     Text("AI 转换")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ChipPill(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = MiuixTheme.colorScheme.secondaryContainer,
+        contentColor = MiuixTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            SpacerH(4)
+            Text(label, style = MiuixTheme.textStyles.footnote2)
         }
     }
 }

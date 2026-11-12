@@ -15,10 +15,6 @@ import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material3.AlertDialog
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +33,10 @@ import com.wangucanghai.isposed.ui.components.SectionCard
 import com.wangucanghai.isposed.ui.components.SectionTitle
 import com.wangucanghai.isposed.ui.components.SettingRow
 import com.wangucanghai.isposed.ui.notice.NoticeContent
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Settings: activation, shell, AI, updates and about/notices.
@@ -118,20 +118,23 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = 28.dp))
     }
 
-    dialog?.let { (title, text) ->
-        AlertDialog(
-            onDismissRequest = { dialog = null },
-            title = { Text(title) },
-            text = {
-                Text(
-                    text = text,
-                    style = MiuixTheme.textStyles.footnote1,
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { dialog = null }) { Text("关闭") }
-            },
-        )
+    OverlayDialog(
+        show = dialog != null,
+        title = dialog?.first ?: "",
+        onDismissRequest = { dialog = null },
+    ) {
+        Column {
+            Text(
+                text = dialog?.second ?: "",
+                style = MiuixTheme.textStyles.footnote1,
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            )
+            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
+            TextButton(
+                text = "关闭",
+                onClick = { dialog = null },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

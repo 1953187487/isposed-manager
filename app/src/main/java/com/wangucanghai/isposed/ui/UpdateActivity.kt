@@ -10,28 +10,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.LinearProgressIndicator
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.core.AppPrefs
+import com.wangucanghai.isposed.ui.components.ScaffoldPage
 import com.wangucanghai.isposed.ui.components.SectionCard
 import com.wangucanghai.isposed.ui.components.SpacerH
 import com.wangucanghai.isposed.ui.theme.IsposedTheme
@@ -41,6 +30,10 @@ import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.Button
+import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Update screen: checks the latest release and updates in-app by downloading
@@ -59,36 +52,6 @@ class UpdateActivity : ComponentActivity() {
                     UpdateContent()
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ScaffoldPage(
-    title: String,
-    onBack: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
-        ) {
-            content()
         }
     }
 }
@@ -162,7 +125,7 @@ private fun UpdateContent() {
                         }
                     },
                     enabled = !downloading,
-                    shape = RoundedCornerShape(14.dp),
+                    cornerRadius = 14.dp,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(if (downloading) "下载中…" else "下载并安装")

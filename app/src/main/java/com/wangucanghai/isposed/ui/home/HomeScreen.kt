@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,12 +26,6 @@ import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,6 +55,12 @@ import com.wangucanghai.isposed.ui.components.SectionCard
 import com.wangucanghai.isposed.ui.components.SectionTitle
 import com.wangucanghai.isposed.ui.components.SpacerH
 import com.wangucanghai.isposed.util.Logger
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Surface
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Home dashboard: activation status, quick actions and runtime statistics.
@@ -85,7 +86,7 @@ fun HomeScreen(modifier: Modifier = Modifier, onModules: () -> Unit = {}) {
     }
 
     LazyColumn(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().animateContentSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -194,9 +195,9 @@ fun HomeScreen(modifier: Modifier = Modifier, onModules: () -> Unit = {}) {
 private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (active) {
+        cornerRadius = 24.dp,
+        colors = CardDefaults.defaultColors(
+            color = if (active) {
                 MiuixTheme.colorScheme.primaryContainer
             } else {
                 MiuixTheme.colorScheme.secondaryContainer

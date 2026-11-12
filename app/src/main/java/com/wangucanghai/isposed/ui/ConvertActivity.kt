@@ -12,27 +12,25 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Transform
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import com.wangucanghai.isposed.ai.AiClient
 import com.wangucanghai.isposed.ai.ModuleConverter
 import com.wangucanghai.isposed.core.AppPrefs
@@ -44,6 +42,12 @@ import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.Button
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Surface
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * AI module conversion: converts an Isposed/Xposed module to an adapter for this manager.
@@ -67,7 +71,6 @@ class ConvertActivity : ComponentActivity() {
 
 private data class ModuleChoice(val label: String, val pkg: String)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ConvertContent() {
     val context = LocalContext.current
@@ -87,37 +90,78 @@ private fun ConvertContent() {
         modules = list.map { ModuleChoice(it.label + "  (" + it.packageName + ")", it.packageName) }
     }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
+    Surface(
+        onClick = { expanded = true },
+        shape = RoundedCornerShape(14.dp),
+        color = MiuixTheme.colorScheme.secondaryContainer,
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        OutlinedTextField(
-            value = picked?.label ?: "",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("选择模块") },
-            placeholder = { Text("未选择") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(),
-            shape = RoundedCornerShape(14.dp),
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                picked?.label ?: "未选择模块",
+                style = MiuixTheme.textStyles.body1,
+                color = if (picked != null) {
+                    MiuixTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MiuixTheme.colorScheme.onSurfaceContainerVariant
+                },
+            )
+            Icon(
+                Icons.Filled.ExpandMore,
+                contentDescription = null,
+                tint = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+            )
+        }
+    }
+    OverlayDialog(
+        show = expanded,
+        title = "选择模块",
+        onDismissRequest = { expanded = false },
+    ) {
+        Column(
+            modifier = Modifier.verticalScroll(rememberScrollState()),
         ) {
             if (modules.isEmpty()) {
-                DropdownMenuItem(text = { Text("未发现可转换的模块") }, onClick = { expanded = false })
-            }
-            modules.forEach { m ->
-                DropdownMenuItem(
-                    text = { Text(m.label) },
-                    onClick = {
-                        picked = m
-                        expanded = false
-                    },
+                Text(
+                    "未发现可转换的模块",
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 )
+            } else {
+                modules.forEach { m ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                picked = m
+                                expanded = false
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            m.label,
+                            style = MiuixTheme.textStyles.body2,
+                            color = if (picked?.pkg == m.pkg) {
+                                MiuixTheme.colorScheme.primary
+                            } else {
+                                MiuixTheme.colorScheme.onSurface
+                            },
+                        )
+                        if (picked?.pkg == m.pkg) {
+                            Icon(
+                                Icons.Filled.CheckCircle,
+                                contentDescription = null,
+                                tint = MiuixTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -147,7 +191,7 @@ private fun ConvertContent() {
             }
         },
         enabled = !busy,
-        shape = RoundedCornerShape(14.dp),
+        cornerRadius = 14.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Icon(Icons.Filled.Transform, contentDescription = null)
@@ -158,7 +202,7 @@ private fun ConvertContent() {
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().animateContentSize(),
         ) {
             Text(
                 text = result,
