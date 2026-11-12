@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -15,6 +13,8 @@ import com.wangucanghai.isposed.ui.components.ScaffoldPage
 import com.wangucanghai.isposed.ui.components.SectionCard
 import com.wangucanghai.isposed.ui.components.SpacerH
 import com.wangucanghai.isposed.ui.theme.IsposedTheme
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * About page: developer author (万古沧海 / B站同名), upstream projects and licenses.
@@ -41,30 +41,30 @@ private fun AboutContent() {
     val context = androidx.compose.ui.platform.LocalContext.current
     Text(
         "Isposed Manager",
-        style = MaterialTheme.typography.headlineSmall,
+        style = MiuixTheme.textStyles.headline2,
         modifier = Modifier.verticalScroll(rememberScrollState()),
     )
     SpacerH(4)
     Text(
         "v${versionName(context)} · 测试版",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MiuixTheme.textStyles.footnote1,
+        color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
     )
     SpacerH(16)
     SectionCard {
-        Text("作者", style = MaterialTheme.typography.titleSmall)
+        Text("作者", style = MiuixTheme.textStyles.title3)
         SpacerH(8)
-        Text("万古沧海", style = MaterialTheme.typography.bodyLarge)
-        Text("B站 · 同名账号", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("GitHub · 1953187487", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("万古沧海", style = MiuixTheme.textStyles.body1)
+        Text("B站 · 同名账号", style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceContainerVariant)
+        Text("GitHub · 1953187487", style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceContainerVariant)
     }
     SpacerH(16)
     SectionCard {
-        Text("第三方开源声明", style = MaterialTheme.typography.titleSmall)
+        Text("第三方开源声明", style = MiuixTheme.textStyles.title3)
         SpacerH(8)
         Text(
             THIRD_PARTY,
-            style = MaterialTheme.typography.bodySmall,
+            style = MiuixTheme.textStyles.footnote1,
             fontFamily = FontFamily.Monospace,
         )
     }

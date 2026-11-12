@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,13 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,6 +36,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Reusable UI primitives for Isposed Manager.
@@ -52,30 +54,25 @@ fun SectionCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+        modifier = modifier.fillMaxWidth(),
+        cornerRadius = 20.dp,
+        insideMargin = PaddingValues(18.dp),
+        colors = CardDefaults.defaultColors(
+            color = MiuixTheme.colorScheme.surfaceContainer,
+            contentColor = MiuixTheme.colorScheme.onSurfaceContainer,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = CardDefaults.outlinedCardBorder(),
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            content = content,
-        )
-    }
+        onClick = onClick,
+        content = content,
+    )
 }
 
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(
+    SmallTitle(
         text = text,
-        modifier = modifier.padding(top = 18.dp, bottom = 8.dp, start = 6.dp),
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.primary,
+        modifier = modifier.padding(top = 18.dp, start = 6.dp),
+        textColor = MiuixTheme.colorScheme.primary,
+        insideMargin = PaddingValues(0.dp),
     )
 }
 
@@ -97,26 +94,26 @@ fun SettingRow(
     ) {
         Surface(
             shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
+            color = MiuixTheme.colorScheme.primaryContainer,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                tint = MiuixTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.padding(8.dp).size(22.dp),
             )
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MiuixTheme.textStyles.body1,
+                color = MiuixTheme.colorScheme.onSurface,
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -124,17 +121,17 @@ fun SettingRow(
         }
         trailing?.invoke()
         Icon(
-            imageVector = Icons.Filled.KeyboardArrowRight,
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
     }
 }
 
 @Composable
 fun StatusBadge(text: String, active: Boolean) {
-    val bg = if (active) Color(0xFF2E7D32) else MaterialTheme.colorScheme.surfaceVariant
-    val fg = if (active) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+    val bg = if (active) Color(0xFF2E7D32) else MiuixTheme.colorScheme.surfaceContainerHigh
+    val fg = if (active) Color.White else MiuixTheme.colorScheme.onSurfaceContainerVariant
     Surface(shape = CircleShape, color = bg) {
         Text(
             text = text,
@@ -149,11 +146,11 @@ fun StatusBadge(text: String, active: Boolean) {
 fun BetaBadge() {
     Surface(
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.tertiary,
+        color = MiuixTheme.colorScheme.primaryContainer,
     ) {
         Text(
             text = "测试版",
-            color = MaterialTheme.colorScheme.onTertiary,
+            color = MiuixTheme.colorScheme.onPrimaryContainer,
             fontSize = 10.sp,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
         )
