@@ -54,6 +54,7 @@ class AdbClient(
 
     private fun handshake() {
         sendPacket(CMD_CNXN, VERSION, MAX_DATA, "host::\u0000".toByteArray())
+        var authAttempts = 0
         while (true) {
             val (cmd, arg0, arg1, payload) = readPacket()
             when (cmd) {
@@ -64,7 +65,13 @@ class AdbClient(
                 CMD_AUTH -> {
                     // arg0: 1=TOKEN, 2=SIGNATURE, 3=RSAPUBLICKEY
                     when (arg0) {
-                        AUTH_TOKEN -> sendAuthSignature(payload)
+                        AUTH_TOKEN -> {
+                            // Cap the number of challenge responses so a device
+                            // that keeps rejecting our key cannot loop forever.
+                            if (authAttempts >= MAX_AUTH_ATTEMPTS) return
+                            authAttempts++
+                            sendAuthSignature(payload)
+                        }
                         AUTH_SIGNATURE, AUTH_RSAPUBLICKEY -> {
                             authed = true
                             return
@@ -261,6 +268,7 @@ class AdbClient(
         private const val ID_DATA = 0x41544144
         private const val ID_DONE = 0x454E4F44
         private const val ID_OKAY = 0x59414B4F
+        private const val MAX_AUTH_ATTEMPTS = 3
 
         /** Generate (or reuse) an RSA 2048 keypair for ADB auth. */
         fun generateKeyPair(): KeyPair {

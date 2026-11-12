@@ -3,6 +3,8 @@ package com.wangucanghai.isposed.adb
 import android.content.Context
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.util.Logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * AxManager-style activation orchestration.
@@ -98,6 +100,16 @@ class ActivationManager(private val context: Context) {
             c.close()
             false
         }
+    }
+
+    /**
+     * Scan the local network for plain-ADB-over-TCP devices so the user can
+     * pick one instead of typing its IP manually.
+     */
+    suspend fun scanLanDevices(
+        onProgress: suspend (done: Int, total: Int) -> Unit = { _, _ -> },
+    ): List<LanScanner.FoundDevice> = withContext(Dispatchers.IO) {
+        LanScanner(keys.key()).scan(onProgress)
     }
 
     /**

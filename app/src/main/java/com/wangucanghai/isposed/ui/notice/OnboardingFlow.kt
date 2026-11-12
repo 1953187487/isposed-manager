@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.core.LocaleHelper
@@ -40,6 +41,7 @@ import com.wangucanghai.isposed.ui.components.SpacerH
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Checkbox
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Surface
@@ -100,8 +102,12 @@ fun OnboardingFlow(
             ProgressTrack(progress = progress)
             SpacerH(16)
 
+            // The step area must carry the remaining weight, otherwise the scrollable
+            // content measures with an unbounded height and pushes the action row
+            // below the viewport.
             AnimatedContent(
                 targetState = step,
+                modifier = Modifier.weight(1f),
                 transitionSpec = {
                     (slideInHorizontally(tween(280)) { it / 3 } + fadeIn(tween(280)))
                         .togetherWith(
@@ -146,29 +152,39 @@ fun OnboardingFlow(
                 }
                 Button(
                     onClick = {
-                        if (step < 2) {
-                            step += 1
-                        } else {
-                            prefs.agreementAccepted = true
-                            prefs.agreementVersion = NoticeContent.AGREEMENT_VERSION
-                            prefs.aiNoticeAccepted = true
-                            if (language != prefs.appLanguage) {
-                                prefs.appLanguage = language
-                                LocaleHelper.applyToSystem(context, language)
+                        when (step) {
+                            0 -> {
+                                agreed = true
+                                step = 1
                             }
-                            onFinished()
+
+                            1 -> step = 2
+
+                            else -> {
+                                ossAccepted = true
+                                prefs.agreementAccepted = true
+                                prefs.agreementVersion = NoticeContent.AGREEMENT_VERSION
+                                prefs.aiNoticeAccepted = true
+                                if (language != prefs.appLanguage) {
+                                    prefs.appLanguage = language
+                                    LocaleHelper.applyToSystem(context, language)
+                                }
+                                onFinished()
+                            }
                         }
                     },
-                    enabled = when (step) {
-                        0 -> agreed
-                        1 -> true
-                        else -> ossAccepted
-                    },
+                    enabled = true,
                     modifier = Modifier.weight(if (step > 0) 1.6f else 1f),
                     minHeight = 50.dp,
                     cornerRadius = 14.dp,
                 ) {
-                    Text(if (step < 2) "下一步" else "开始使用")
+                    Text(
+                        when (step) {
+                            0 -> "同意并继续"
+                            1 -> "下一步"
+                            else -> "同意并开始使用"
+                        },
+                    )
                 }
             }
             SpacerH(10)
@@ -209,7 +225,13 @@ private fun AgreementStep(
     onToggle: () -> Unit,
 ) {
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        NoticeBlock(title = title, text = text, checked = checked, onToggle = onToggle)
+        NoticeBlock(title = title, text = text)
+        SpacerH(12)
+        AgreeRow(
+            label = "我已阅读并同意《${title}》",
+            checked = checked,
+            onToggle = onToggle,
+        )
         SpacerH(12)
     }
 }
@@ -224,6 +246,10 @@ private fun OssStep(
         NoticeBlock(
             title = NoticeContent.OSS_NOTICE_TITLE,
             text = text,
+        )
+        SpacerH(12)
+        AgreeRow(
+            label = "我已阅读并同意《${NoticeContent.OSS_NOTICE_TITLE}》",
             checked = checked,
             onToggle = onToggle,
         )
@@ -274,12 +300,40 @@ private fun LanguageStep(
     }
 }
 
+/**
+ * Explicit agreement control. The checkbox owns the click handling so the tap
+ * always reaches the toggle, and the trailing label stays readable.
+ */
+@Composable
+private fun AgreeRow(
+    label: String,
+    checked: Boolean,
+    onToggle: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Checkbox(
+            state = if (checked) ToggleableState.On else ToggleableState.Off,
+            onClick = onToggle,
+        )
+        Text(
+            text = label,
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onSurface,
+            modifier = Modifier.clickable { onToggle() },
+        )
+    }
+}
+
 @Composable
 private fun NoticeBlock(
     title: String,
     text: String,
-    checked: Boolean,
-    onToggle: () -> Unit,
+    checked: Boolean? = null,
+    onToggle: (() -> Unit)? = null,
     leadingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
 ) {
     Card(
@@ -290,7 +344,11 @@ private fun NoticeBlock(
         ),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable { onToggle() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (onToggle != null) Modifier.clickable { onToggle() } else Modifier,
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -307,11 +365,13 @@ private fun NoticeBlock(
                 color = MiuixTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
-            Icon(
-                imageVector = if (checked) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
-                contentDescription = null,
-                tint = if (checked) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.outline,
-            )
+            if (checked != null) {
+                Icon(
+                    imageVector = if (checked) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
+                    contentDescription = null,
+                    tint = if (checked) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.outline,
+                )
+            }
         }
         SpacerH(10)
         Surface(color = MiuixTheme.colorScheme.surface.copy(alpha = 0.7f)) {

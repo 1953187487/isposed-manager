@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.adb.ActivationManager
+import com.wangucanghai.isposed.adb.LanScanner
 import com.wangucanghai.isposed.adb.MdnsResolver
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.ui.components.SectionCard
@@ -96,6 +97,9 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
     var step by remember { mutableStateOf("") }
     var pairing by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
     var connecting by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
+    var lanDevices by remember { mutableStateOf<List<LanScanner.FoundDevice>>(emptyList()) }
+    var lanScanning by remember { mutableStateOf(false) }
+    var lanProgress by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf(ActivationMode.WIRELESS) }
     var codeValue by remember { mutableStateOf(TextFieldValue("")) }
     val code = codeValue.text
@@ -301,6 +305,39 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                     onHostChange = { hostValue = it },
                     port = tcpPort,
                     onPortChange = { tcpPortValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(5)) },
+                    devices = lanDevices,
+                    scanning = lanScanning,
+                    progress = lanProgress,
+                    onScan = {
+                        scope.launch {
+                            lanScanning = true
+                            lanDevices = emptyList()
+                            lanProgress = "准备扫描…"
+                            log("开始扫描局域网 ADB 设备…")
+                            var lastProgress = -1
+                            val found = manager.scanLanDevices { done, total ->
+                                // Throttle: only refresh the label when the percent changes.
+                                val pct = (done * 100) / total.coerceAtLeast(1)
+                                if (pct != lastProgress) {
+                                    lastProgress = pct
+                                    lanProgress = "扫描中 $pct% ($done/$total)"
+                                }
+                            }
+                            lanScanning = false
+                            lanProgress = ""
+                            lanDevices = found
+                            if (found.isEmpty()) {
+                                log("未发现局域网 ADB 设备，请确认设备已开启 ADB 调试并处于同一网络", true)
+                            } else {
+                                log("发现 ${found.size} 个局域网 ADB 设备")
+                            }
+                        }
+                    },
+                    onPick = { device ->
+                        hostValue = TextFieldValue(device.host)
+                        tcpPortValue = TextFieldValue(device.port.toString())
+                        log("已选择 ${device.host}:${device.port}${device.model?.let { "（$it）" } ?: ""}")
+                    },
                     onStart = {
                         scope.launch {
                             busy = true
@@ -496,16 +533,87 @@ private fun TcpPanel(
     onHostChange: (TextFieldValue) -> Unit,
     port: String,
     onPortChange: (TextFieldValue) -> Unit,
+    devices: List<LanScanner.FoundDevice>,
+    scanning: Boolean,
+    progress: String,
+    onScan: () -> Unit,
+    onPick: (LanScanner.FoundDevice) -> Unit,
     onStart: () -> Unit,
 ) {
     SectionCard {
         Text("TCP 激活", style = MiuixTheme.textStyles.title3)
         SpacerH(6)
         Text(
-            text = "设备已通过「adb tcpip 端口」开启明文 ADB 调试时使用，直接填入设备 IP 与端口即可连接，无需再次配对。",
+            text = "设备已通过「adb tcpip 端口」开启明文 ADB 调试时使用。可先自动扫描局域网内可连接的设备，" +
+                "也可直接填入设备 IP 与端口。",
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
+        SpacerH(12)
+        Surface(
+            onClick = onScan,
+            enabled = !scanning && !busy,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            color = MiuixTheme.colorScheme.primaryContainer,
+            contentColor = MiuixTheme.colorScheme.onPrimaryContainer,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                if (scanning) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Filled.Lan, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+                SpacerH(6)
+                Text(
+                    text = if (scanning) progress.ifBlank { "正在扫描…" } else "扫描局域网设备",
+                    style = MiuixTheme.textStyles.button,
+                )
+            }
+        }
+        if (devices.isNotEmpty()) {
+            SpacerH(10)
+            Text(
+                text = "发现 ${devices.size} 个设备，点击即可填入",
+                style = MiuixTheme.textStyles.footnote2,
+                color = MiuixTheme.colorScheme.primary,
+            )
+            SpacerH(6)
+            devices.forEach { device ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onPick(device) },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    contentColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(
+                            text = "${device.host}:${device.port}",
+                            style = MiuixTheme.textStyles.footnote1,
+                            color = MiuixTheme.colorScheme.onSurface,
+                        )
+                        if (device.model != null) {
+                            Text(
+                                text = device.model,
+                                style = MiuixTheme.textStyles.footnote1,
+                                color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+                            )
+                        }
+                    }
+                }
+                SpacerH(6)
+            }
+        }
         SpacerH(12)
         TextField(
             value = TextFieldValue(host),
