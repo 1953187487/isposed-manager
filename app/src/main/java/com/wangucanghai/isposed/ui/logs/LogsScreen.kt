@@ -15,7 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,7 +44,7 @@ fun LogsScreen(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("日志", style = MaterialTheme.typography.headlineSmall)
+            Text("日志", style = MiuixTheme.textStyles.headline2)
             IconButton(onClick = {
                 Logger.clear()
                 entries = Logger.entries()
@@ -56,7 +56,7 @@ fun LogsScreen(modifier: Modifier = Modifier) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     "暂无日志",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 )
             }
         } else {
@@ -70,13 +70,13 @@ fun LogsScreen(modifier: Modifier = Modifier) {
             ) {
                 items(entries.reversed()) { line ->
                     val color = when {
-                        line.contains(" E ") -> MaterialTheme.colorScheme.error
-                        line.contains(" W ") -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        line.contains(" E ") -> MiuixTheme.colorScheme.error
+                        line.contains(" W ") -> MiuixTheme.colorScheme.primaryContainer
+                        else -> MiuixTheme.colorScheme.onSurfaceContainerVariant
                     }
                     Text(
                         text = line,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MiuixTheme.textStyles.footnote1,
                         fontFamily = FontFamily.Monospace,
                         color = color,
                         modifier = Modifier.fillMaxWidth(),

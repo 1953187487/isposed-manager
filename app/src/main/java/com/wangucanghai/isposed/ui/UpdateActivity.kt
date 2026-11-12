@@ -12,7 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -118,28 +118,28 @@ private fun UpdateContent() {
 
     val currentVersion = versionName(context)
     SectionCard {
-        Text("当前版本", style = MaterialTheme.typography.titleSmall)
+        Text("当前版本", style = MiuixTheme.textStyles.title3)
         SpacerH(6)
-        Text("v$currentVersion", style = MaterialTheme.typography.headlineSmall)
+        Text("v$currentVersion", style = MiuixTheme.textStyles.headline2)
     }
     SpacerH(16)
     SectionCard {
-        Text("最新版本", style = MaterialTheme.typography.titleSmall)
+        Text("最新版本", style = MiuixTheme.textStyles.title3)
         SpacerH(6)
         when {
-            checking -> Text("检查中…", style = MaterialTheme.typography.bodyMedium)
-            info == null -> Text("检查失败（网络或限流）", style = MaterialTheme.typography.bodyMedium)
+            checking -> Text("检查中…", style = MiuixTheme.textStyles.body2)
+            info == null -> Text("检查失败（网络或限流）", style = MiuixTheme.textStyles.body2)
             info!!.hasUpdate -> {
                 Text(
                     "发现新版本 v${info!!.latestVersion}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MiuixTheme.textStyles.body1,
+                    color = MiuixTheme.colorScheme.primary,
                 )
                 SpacerH(8)
                 Text(
                     info!!.notes.ifBlank { "无更新说明" },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                 )
                 SpacerH(12)
@@ -174,7 +174,7 @@ private fun UpdateContent() {
             }
             else -> Text(
                 "已是最新版本（当前 v$currentVersion / 最新 ${info!!.latestVersion}）",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MiuixTheme.textStyles.body2,
             )
         }
     }

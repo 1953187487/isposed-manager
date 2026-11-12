@@ -29,7 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -136,8 +136,8 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                 androidx.compose.foundation.layout.Spacer(Modifier.size(16.dp))
                 Text(
                     text = "模块",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MiuixTheme.textStyles.headline2,
+                    color = MiuixTheme.colorScheme.onBackground,
                 )
                 androidx.compose.foundation.layout.Spacer(Modifier.size(12.dp))
                 OutlinedTextField(
@@ -174,7 +174,7 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = if (loading) "加载中…" else "未发现 Xposed 模块",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     )
                 }
             } else {
@@ -221,7 +221,7 @@ private fun ModuleCard(
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MiuixTheme.colorScheme.surface),
         border = CardDefaults.outlinedCardBorder(),
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -231,14 +231,14 @@ private fun ModuleCard(
                 Column(Modifier.weight(1f)) {
                     Text(
                         text = module.label,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MiuixTheme.textStyles.title2,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text = "${module.packageName}  ·  v${module.versionName}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MiuixTheme.textStyles.footnote1,
+                        color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -252,8 +252,8 @@ private fun ModuleCard(
                 androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
                 Text(
                     text = module.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )

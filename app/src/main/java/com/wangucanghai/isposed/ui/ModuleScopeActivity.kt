@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -81,7 +81,7 @@ private fun ModuleScopeContent(pkg: String) {
     }
 
     if (!loaded) {
-        Text("加载中…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("加载中…", color = MiuixTheme.colorScheme.onSurfaceContainerVariant)
         return
     }
     LazyColumn(
@@ -103,7 +103,7 @@ private fun ModuleScopeContent(pkg: String) {
                 )
                 Text(
                     text = "${app.label}  (${app.packageName})",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MiuixTheme.textStyles.body2,
                     modifier = Modifier.weight(1f),
                 )
             }

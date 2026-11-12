@@ -30,7 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -102,12 +102,12 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             .padding(horizontal = 20.dp),
     ) {
         androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
-        Text("无线调试激活", style = MaterialTheme.typography.headlineSmall)
+        Text("无线调试激活", style = MiuixTheme.textStyles.headline2)
         SpacerH(6)
         Text(
             text = "全程无需 Root。先开启开发者选项 → 无线调试，配对一次即可。",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
         SpacerH(16)
 
@@ -126,22 +126,22 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                         )
                     }
                     SpacerH(4)
-                    Text("当前状态", style = MaterialTheme.typography.titleSmall)
+                    Text("当前状态", style = MiuixTheme.textStyles.title3)
                 }
                 StatusBadge(if (active) "已激活" else "未激活", active)
             }
             SpacerH(10)
             Text(
                 text = if (active) "授权地址：${prefs.adbHost}:${prefs.adbPort}" else "尚未建立 ADB 授权",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MiuixTheme.textStyles.footnote1,
+                color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
             )
             AnimatedVisibility(visible = busy, enter = fadeIn() + slideInVertically { it / 2 }) {
                 SpacerH(8)
                 Text(
                     text = step.ifBlank { "正在激活…" },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MiuixTheme.textStyles.footnote2,
+                    color = MiuixTheme.colorScheme.primary,
                 )
             }
         }
@@ -272,23 +272,23 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
 
         SectionTitle("发现的服务")
         if (pairing.isNotEmpty()) {
-            Text("配对服务", style = MaterialTheme.typography.labelMedium)
+            Text("配对服务", style = MiuixTheme.textStyles.footnote2)
             pairing.forEach { svc ->
                 Text(
                     "${svc.instanceName}  ${svc.host}:${svc.port}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.primary,
                 )
             }
         }
         if (connecting.isNotEmpty()) {
             SpacerH(6)
-            Text("连接服务", style = MaterialTheme.typography.labelMedium)
+            Text("连接服务", style = MiuixTheme.textStyles.footnote2)
             connecting.forEach { svc ->
                 Text(
                     "${svc.instanceName}  ${svc.host}:${svc.port}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.secondary,
                 )
             }
         }
@@ -296,7 +296,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
         SectionTitle("激活日志")
         Surface(
             shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 260.dp),
         ) {
             Column(
@@ -307,16 +307,16 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                 if (events.isEmpty()) {
                     Text(
                         "尚无日志",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MiuixTheme.textStyles.footnote1,
+                        color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     )
                 }
                 events.forEach { (msg, error) ->
                     Text(
                         text = msg,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MiuixTheme.textStyles.footnote1,
                         fontFamily = FontFamily.Monospace,
-                        color = if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        color = if (error) MiuixTheme.colorScheme.error else MiuixTheme.colorScheme.onSurface,
                     )
                 }
             }

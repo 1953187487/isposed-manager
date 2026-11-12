@@ -28,7 +28,7 @@ import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -98,13 +98,13 @@ fun HomeScreen(modifier: Modifier = Modifier, onModules: () -> Unit = {}) {
                 Column {
                     Text(
                         text = "Isposed Manager",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MiuixTheme.textStyles.headline2,
+                        color = MiuixTheme.colorScheme.onBackground,
                     )
                     Text(
                         text = "免 Root 的 Xposed / LSPosed 管理器",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MiuixTheme.textStyles.footnote1,
+                        color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     )
                 }
                 BetaBadge()
@@ -172,16 +172,16 @@ fun HomeScreen(modifier: Modifier = Modifier, onModules: () -> Unit = {}) {
                     Icon(
                         imageVector = Icons.Filled.AutoAwesome,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MiuixTheme.colorScheme.primary,
                         modifier = Modifier.size(22.dp),
                     )
                     SpacerH(4)
                     Column {
-                        Text("AI 服务商配置", style = MaterialTheme.typography.titleSmall)
+                        Text("AI 服务商配置", style = MiuixTheme.textStyles.title3)
                         Text(
                             text = if (prefs.aiBaseUrl.isEmpty()) "尚未配置 Base URL 与 API Key" else prefs.aiBaseUrl,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MiuixTheme.textStyles.footnote1,
+                            color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                         )
                     }
                 }
@@ -197,9 +197,9 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (active) {
-                MaterialTheme.colorScheme.primaryContainer
+                MiuixTheme.colorScheme.primaryContainer
             } else {
-                MaterialTheme.colorScheme.secondaryContainer
+                MiuixTheme.colorScheme.secondaryContainer
             },
         ),
     ) {
@@ -211,20 +211,20 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Dot(
-                        color = if (active) Color(0xFF2E7D32) else MaterialTheme.colorScheme.secondary,
+                        color = if (active) Color(0xFF2E7D32) else MiuixTheme.colorScheme.secondary,
                         size = 10,
                     )
                     SpacerH(4)
                     Text(
                         text = if (active) "已激活" else "未激活",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style = MiuixTheme.textStyles.title2,
+                        color = MiuixTheme.colorScheme.onPrimaryContainer,
                     )
                 }
                 Icon(
                     imageVector = if (active) Icons.Filled.CheckCircle else Icons.Filled.RocketLaunch,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = MiuixTheme.colorScheme.onPrimaryContainer,
                 )
             }
             SpacerH(10)
@@ -234,15 +234,15 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
                 } else {
                     "点击进入激活页，通过无线调试配对获取 Shell 权限，全程无需 Root。"
                 },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
             )
             if (active) {
                 SpacerH(8)
                 Text(
                     text = "$host:$port",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                 )
             }
         }
@@ -280,7 +280,7 @@ private fun QuickAction(
     Surface(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+        color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
     ) {
         Column(
             modifier = Modifier.padding(vertical = 14.dp, horizontal = 4.dp),
@@ -289,14 +289,14 @@ private fun QuickAction(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MiuixTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp),
             )
             SpacerH(6)
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MiuixTheme.textStyles.footnote2,
+                color = MiuixTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium,
             )
         }
@@ -309,7 +309,7 @@ private fun StatRow(label: String, value: String) {
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(label, style = MiuixTheme.textStyles.body2, color = MiuixTheme.colorScheme.onSurfaceContainerVariant)
+        Text(value, style = MiuixTheme.textStyles.body2, color = MiuixTheme.colorScheme.onSurface)
     }
 }

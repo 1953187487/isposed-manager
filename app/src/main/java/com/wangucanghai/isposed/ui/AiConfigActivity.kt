@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -103,7 +103,7 @@ private fun AiConfigContent() {
             shape = RoundedCornerShape(14.dp),
         )
         SpacerH(10)
-        Text("温度：${"%.2f".format(temp)}", style = MaterialTheme.typography.bodySmall)
+        Text("温度：${"%.2f".format(temp)}", style = MiuixTheme.textStyles.footnote1)
         Slider(
             value = temp,
             onValueChange = { temp = it },
@@ -177,7 +177,7 @@ private fun AiConfigContent() {
         SectionCard {
             Text(
                 result,
-                style = MaterialTheme.typography.bodySmall,
+                style = MiuixTheme.textStyles.footnote1,
                 modifier = Modifier.verticalScroll(rememberScrollState()),
             )
         }

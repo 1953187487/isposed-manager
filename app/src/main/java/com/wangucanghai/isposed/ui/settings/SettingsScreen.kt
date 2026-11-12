@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,7 +55,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             .padding(horizontal = 20.dp),
     ) {
         androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
-        Text("设置", style = MaterialTheme.typography.headlineSmall)
+        Text("设置", style = MiuixTheme.textStyles.headline2)
 
         SectionTitle("激活与调试")
         SectionCard {
@@ -125,7 +125,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             text = {
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MiuixTheme.textStyles.footnote1,
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                 )
             },

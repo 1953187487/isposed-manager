@@ -1,5 +1,6 @@
 package com.wangucanghai.isposed.ui
 
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -123,7 +124,7 @@ private fun MainScaffold() {
                         .clickable { context.startActivity(android.content.Intent(context, UpdateActivity::class.java)) },
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.tertiaryContainer,
+                        containerColor = MiuixTheme.colorScheme.tertiaryContainer,
                     ),
                 ) {
                     Row(
@@ -133,19 +134,19 @@ private fun MainScaffold() {
                         Icon(
                             imageVector = Icons.Filled.SystemUpdateAlt,
                             contentDescription = null,
-                            tint = androidx.compose.material3.MaterialTheme.colorScheme.onTertiaryContainer,
+                            tint = MiuixTheme.colorScheme.onTertiaryContainer,
                         )
                         Spacer(Modifier.width(10.dp))
                         androidx.compose.foundation.layout.Column {
                             Text(
                                 "发现新版本 v${up.latestVersion}",
-                                style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
-                                color = androidx.compose.material3.MaterialTheme.colorScheme.onTertiaryContainer,
+                                style = MiuixTheme.textStyles.title3,
+                                color = MiuixTheme.colorScheme.onTertiaryContainer,
                             )
                             Text(
                                 "点击查看并更新",
-                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                                color = androidx.compose.material3.MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
+                                style = MiuixTheme.textStyles.footnote1,
+                                color = MiuixTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
                             )
                         }
                     }
