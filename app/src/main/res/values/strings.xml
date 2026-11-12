@@ -103,6 +103,9 @@
     <string name="shell_run">运行</string>
     <string name="shell_hint">输入命令，如：id / getprop ro.build.version.release</string>
 
+    <!-- activation -->
+    <string name="activation_title">无线调试激活</string>
+
     <!-- common -->
     <string name="ok">确定</string>
     <string name="cancel">取消</string>

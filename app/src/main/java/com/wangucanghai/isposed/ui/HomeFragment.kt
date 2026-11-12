@@ -30,7 +30,7 @@ import kotlinx.coroutines.withContext
 class HomeFragment : Fragment() {
 
     private val prefs by lazy { AppPrefs(requireContext()) }
-    private val debugger by lazy { WirelessDebugger(prefs) }
+    private val debugger by lazy { WirelessDebugger(requireContext(), prefs) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?

@@ -75,6 +75,10 @@
             android:exported="false"
             android:label="@string/shell_title" />
         <activity
+            android:name=".ui.ActivationActivity"
+            android:exported="false"
+            android:label="@string/activation_title" />
+        <activity
             android:name=".ui.UpdateActivity"
             android:exported="false"
             android:label="@string/update_title" />

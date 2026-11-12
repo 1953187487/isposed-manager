@@ -1,15 +1,41 @@
 package com.wangucanghai.isposed.ui
 
 import android.os.Bundle
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textfield.TextInputEditText
-import com.wangucanghai.isposed.R
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.adb.ShellExecutor
 import com.wangucanghai.isposed.core.AppPrefs
+import com.wangucanghai.isposed.ui.components.ScaffoldPage
+import com.wangucanghai.isposed.ui.components.SectionCard
+import com.wangucanghai.isposed.ui.components.SpacerH
+import com.wangucanghai.isposed.ui.theme.IsposedTheme
 import com.wangucanghai.isposed.util.Logger
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,24 +45,74 @@ import kotlinx.coroutines.withContext
  *
  * Copyright (C) 2026 万古沧海
  */
-class ShellActivity : AppCompatActivity() {
+class ShellActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_shell)
-        val input = findViewById<TextInputEditText>(R.id.input_cmd)
-        val output = findViewById<TextView>(R.id.output)
-
-        findViewById<MaterialButton>(R.id.btn_run).setOnClickListener {
-            val cmd = input.text.toString().trim()
-            if (cmd.isEmpty()) return@setOnClickListener
-            output.text = "> $cmd\n"
-            CoroutineScope(Dispatchers.Main).launch {
-                val shell = ShellExecutor(AppPrefs(this@ShellActivity))
-                val r = withContext(Dispatchers.IO) { shell.exec(cmd) }
-                output.text = "> $cmd\n\n${r.output}"
-                Logger.i("shell: $cmd -> ${r.output.take(100)}")
+        enableEdgeToEdge()
+        setContent {
+            IsposedTheme {
+                ScaffoldPage(title = "Shell 终端", onBack = { finish() }) {
+                    ShellContent()
+                }
             }
         }
     }
+}
+
+@Composable
+private fun ShellContent() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var cmd by remember { mutableStateOf("") }
+    var output by remember { mutableStateOf("") }
+    var running by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = cmd,
+        onValueChange = { cmd = it },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text("输入命令，如 getprop ro.product.model") },
+        singleLine = true,
+        shape = RoundedCornerShape(14.dp),
+    )
+    SpacerH(10)
+    Button(
+        onClick = {
+            val c = cmd.trim()
+            if (c.isEmpty()) return@Button
+            running = true
+            output = "> $c\n"
+            scope.launch {
+                val shell = ShellExecutor(AppPrefs(context))
+                val r = withContext(Dispatchers.IO) { shell.exec(c) }
+                output = "> $c\n\n${r.output}"
+                running = false
+                Logger.i("shell: $c -> ${r.output.take(100)}")
+            }
+        },
+        enabled = !running,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Icon(Icons.Filled.PlayArrow, contentDescription = null)
+        Text("运行")
+    }
+    SpacerH(16)
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 480.dp),
+    ) {
+        Text(
+            text = output.ifBlank { "尚无输出" },
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(12.dp),
+        )
+    }
+    SpacerH(28)
 }

@@ -1,18 +1,46 @@
 package com.wangucanghai.isposed.ui
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AlertDialog
-import com.google.android.material.button.MaterialButton
-import com.wangucanghai.isposed.R
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Transform
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import com.wangucanghai.isposed.ai.AiClient
 import com.wangucanghai.isposed.ai.ModuleConverter
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.data.ModuleRepository
+import com.wangucanghai.isposed.ui.components.ScaffoldPage
+import com.wangucanghai.isposed.ui.components.SpacerH
+import com.wangucanghai.isposed.ui.theme.IsposedTheme
 import com.wangucanghai.isposed.util.Logger
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,57 +50,125 @@ import kotlinx.coroutines.withContext
  *
  * Copyright (C) 2026 万古沧海
  */
-class ConvertActivity : AppCompatActivity() {
-
-    private val prefs by lazy { AppPrefs(this) }
-    private val client by lazy { AiClient(this) }
-    private var pickedPkg: String? = null
+class ConvertActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_convert)
-        val picked = findViewById<TextView>(R.id.picked)
-        val result = findViewById<TextView>(R.id.result)
-
-        findViewById<MaterialButton>(R.id.btn_pick).setOnClickListener {
-            CoroutineScope(Dispatchers.Main).launch {
-                val modules = withContext(Dispatchers.IO) { ModuleRepository(this@ConvertActivity).loadModules() }
-                if (modules.isEmpty()) {
-                    Toast.makeText(this@ConvertActivity, "未发现可转换的模块", Toast.LENGTH_SHORT).show()
-                    return@launch
+        enableEdgeToEdge()
+        setContent {
+            IsposedTheme {
+                ScaffoldPage(title = "模块转换", onBack = { finish() }) {
+                    ConvertContent()
                 }
-                val names = modules.map { it.label + "  (" + it.packageName + ")" }
-                AlertDialog.Builder(this@ConvertActivity)
-                    .setTitle("选择模块")
-                    .setItems(names.toTypedArray()) { _, which ->
-                        val m = modules[which]
-                        pickedPkg = m.packageName
-                        picked.text = m.label + " · v" + m.versionName
-                    }
-                    .show()
-            }
-        }
-
-        findViewById<MaterialButton>(R.id.btn_start).setOnClickListener {
-            val pkg = pickedPkg ?: run {
-                Toast.makeText(this, "请先选择模块", Toast.LENGTH_SHORT).show(); return@setOnClickListener
-            }
-            if (!client.isConfigured()) {
-                Toast.makeText(this, "请先配置 AI 服务商 API", Toast.LENGTH_LONG).show()
-                startActivity(android.content.Intent(this, AiConfigActivity::class.java))
-                return@setOnClickListener
-            }
-            result.text = "分析并转换中…"
-            CoroutineScope(Dispatchers.Main).launch {
-                val desc = withContext(Dispatchers.IO) { ModuleConverter(this@ConvertActivity).analyze(pkg) }
-                if (desc == null) {
-                    result.text = "无法分析该模块"
-                    return@launch
-                }
-                val adapterJson = withContext(Dispatchers.IO) { ModuleConverter(this@ConvertActivity).toAdapter(desc) }
-                result.text = "模块分析完成：\n入口：${desc.entryPoints}\n\n适配器描述：\n$adapterJson"
-                Logger.i("Converted ${desc.packageName}")
             }
         }
     }
+}
+
+private data class ModuleChoice(val label: String, val pkg: String)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConvertContent() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val prefs = remember { AppPrefs(context) }
+    val client = remember { AiClient(context) }
+
+    var modules by remember { mutableStateOf<List<ModuleChoice>>(emptyList()) }
+    var picked by remember { mutableStateOf<ModuleChoice?>(null) }
+    var result by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+
+    // Load modules once.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val list = withContext(Dispatchers.IO) { ModuleRepository(context).loadModules() }
+        modules = list.map { ModuleChoice(it.label + "  (" + it.packageName + ")", it.packageName) }
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+    ) {
+        OutlinedTextField(
+            value = picked?.label ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("选择模块") },
+            placeholder = { Text("未选择") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            shape = RoundedCornerShape(14.dp),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            if (modules.isEmpty()) {
+                DropdownMenuItem(text = { Text("未发现可转换的模块") }, onClick = { expanded = false })
+            }
+            modules.forEach { m ->
+                DropdownMenuItem(
+                    text = { Text(m.label) },
+                    onClick = {
+                        picked = m
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+    SpacerH(12)
+    Button(
+        onClick = {
+            val pkg = picked?.pkg
+            if (pkg == null) { Toast.makeText(context, "请先选择模块", Toast.LENGTH_SHORT).show(); return@Button }
+            if (!client.isConfigured()) {
+                Toast.makeText(context, "请先配置 AI 服务商 API", Toast.LENGTH_LONG).show()
+                context.startActivity(Intent(context, AiConfigActivity::class.java))
+                return@Button
+            }
+            result = "分析并转换中…"
+            busy = true
+            scope.launch {
+                val conv = ModuleConverter(context)
+                val desc = withContext(Dispatchers.IO) { conv.analyze(pkg) }
+                result = if (desc == null) {
+                    "无法分析该模块"
+                } else {
+                    val adapterJson = withContext(Dispatchers.IO) { conv.toAdapter(desc) }
+                    Logger.i("Converted ${desc.packageName}")
+                    "模块分析完成：\n入口：${desc.entryPoints}\n\n适配器描述：\n$adapterJson"
+                }
+                busy = false
+            }
+        },
+        enabled = !busy,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Icon(Icons.Filled.Transform, contentDescription = null)
+        Text("分析并转换")
+    }
+    SpacerH(16)
+    if (result.isNotEmpty()) {
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = result,
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(12.dp),
+            )
+        }
+    }
+    SpacerH(28)
 }

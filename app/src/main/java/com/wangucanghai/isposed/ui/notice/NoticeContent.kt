@@ -7,6 +7,9 @@ package com.wangucanghai.isposed.ui.notice
  */
 object NoticeContent {
 
+    /** 协议版本号：内容变更时递增，用于让新版本重新展示须知。 */
+    const val AGREEMENT_VERSION = 2
+
     const val USER_AGREEMENT_TITLE = "用户须知协议"
     val USER_AGREEMENT = """
         【Isposed Manager 用户须知协议】
@@ -41,6 +44,7 @@ object NoticeContent {
     """.trimIndent()
 
     const val AI_NOTICE_TITLE = "AI 使用须知"
+
     val AI_NOTICE = """
         【AI 使用须知】
 
@@ -64,5 +68,31 @@ object NoticeContent {
         2. 使用 AI 功能即表示你已阅读并同意本须知。
 
         —— 万古沧海（B站同名）
+    """.trimIndent()
+
+    const val OSS_NOTICE_TITLE = "开源协议声明"
+    val OSS_NOTICE = """
+        【开源协议声明】
+
+        本软件（Isposed Manager）为开源软件，以 GPL-3.0 协议发布。在开发过程中，本软件引入或参考了以下开源项目，特此声明并致谢：
+
+        一、LSPosed
+        · 项目：https://github.com/LSPosed/LSPosed
+        · 许可：GPL-3.0
+        · 引入内容：模块管理契约（xposedmodule 元数据）、模块启用与作用域管理逻辑、LSPosed 守护进程通信桥接。
+        · 依据：作为 GPL-3.0 衍生作品，本软件整体以 GPL-3.0 发布，并保留原作者版权与许可声明。
+
+        二、AxManager（Axeron Manager）
+        · 项目：https://github.com/fahrez182/AxManager
+        · 许可：Apache-2.0
+        · 引入内容：免 root 激活方案（ADB 无线调试 mDNS 发现、TLS 配对与连接、TCP 模式切换）、Shell 执行器、插件（module.prop + customize.sh）安装机制、Re-ignite 热重启。
+        · 依据：Apache-2.0 允许衍生使用，本软件保留其版权、许可与致谢声明（详见 THIRD_PARTY_NOTICES.md）。
+
+        三、本软件自身
+        · 作者：万古沧海（B站同名，GitHub: https://github.com/1953187487）
+        · 版权：Copyright (C) 2026 万古沧海
+        · 许可：GPL-3.0（见 LICENSE 文件）
+
+        完整上游许可文本见应用内「关于 → 第三方开源声明」。
     """.trimIndent()
 }

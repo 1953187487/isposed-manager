@@ -54,6 +54,15 @@ class AppPrefs(context: Context) {
         get() = sp.getBoolean("agreement_accepted", false)
         set(v) = sp.edit().putBoolean("agreement_accepted", v).apply()
 
+    var agreementVersion: Int
+        get() = sp.getInt("agreement_version", 0)
+        set(v) = sp.edit().putInt("agreement_version", v).apply()
+
+    /** AI 须知是否已同意（单独记录，AI 功能入口强制提醒）。 */
+    var aiNoticeAccepted: Boolean
+        get() = sp.getBoolean("ai_notice_accepted", false)
+        set(v) = sp.edit().putBoolean("ai_notice_accepted", v).apply()
+
     // ---------- update ----------
     var lastCheckedVersion: String
         get() = sp.getString("last_checked_version", "") ?: ""

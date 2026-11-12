@@ -11,8 +11,8 @@ android {
         applicationId = "com.wangucanghai.isposed"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         vectorDrawables { useSupportLibrary = true }
     }
@@ -47,6 +47,13 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
+
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }
@@ -67,4 +74,15 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
     implementation(libs.gson)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons)
+    implementation(libs.compose.activity)
+    implementation(libs.compose.lifecycle.runtime)
+    implementation(libs.compose.lifecycle.viewmodel)
+    implementation(libs.compose.navigation)
+    debugImplementation(libs.compose.ui.tooling)
 }
