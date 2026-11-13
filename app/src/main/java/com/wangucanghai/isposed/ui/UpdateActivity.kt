@@ -57,8 +57,8 @@ class UpdateActivity : BaseActivity() {
 }
 
 private fun versionName(context: android.content.Context): String = try {
-    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.5"
-} catch (_: Exception) { "1.0.5" }
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.7"
+} catch (_: Exception) { "1.0.7" }
 
 @Composable
 private fun UpdateContent() {

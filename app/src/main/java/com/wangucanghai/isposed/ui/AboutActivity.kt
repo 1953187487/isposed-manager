@@ -310,5 +310,5 @@ private val LICENSE_TEXT = """
 """.trimIndent()
 
 private fun versionName(context: android.content.Context): String = try {
-    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.3"
-} catch (_: Exception) { "1.0.3" }
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.7"
+} catch (_: Exception) { "1.0.7" }

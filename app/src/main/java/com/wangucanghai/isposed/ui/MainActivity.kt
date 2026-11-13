@@ -130,12 +130,11 @@ private fun LaunchGate(onExit: () -> Unit) {
                 title = "更新公告 · v${prefs.pendingChangelogVersion}",
                 onDismissRequest = {},
             ) {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
                         text = prefs.pendingChangelogNotes.ifBlank { "本次更新包含功能优化与问题修复。" },
                         style = MiuixTheme.textStyles.footnote1,
                         color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
                     )
                     Spacer(Modifier.height(16.dp))
                     TextButton(
@@ -161,12 +160,11 @@ private fun LaunchGate(onExit: () -> Unit) {
                 title = NoticeContent.USER_AGREEMENT_TITLE,
                 onDismissRequest = { onExit() },
             ) {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
                         text = NoticeContent.USER_AGREEMENT,
                         style = MiuixTheme.textStyles.footnote1,
                         color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
                     )
                     Spacer(Modifier.height(16.dp))
                     TextButton(

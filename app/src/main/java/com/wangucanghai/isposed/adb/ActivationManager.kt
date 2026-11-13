@@ -105,11 +105,19 @@ class ActivationManager(private val context: Context) {
     /**
      * Scan the local network for plain-ADB-over-TCP devices so the user can
      * pick one instead of typing its IP manually.
+     *
+     * Any failure is contained here: the caller receives an empty list and an
+     * error log instead of an exception that would tear down the UI scope.
      */
     suspend fun scanLanDevices(
         onProgress: suspend (done: Int, total: Int) -> Unit = { _, _ -> },
     ): List<LanScanner.FoundDevice> = withContext(Dispatchers.IO) {
-        LanScanner(keys.key()).scan(onProgress)
+        try {
+            LanScanner(keys.key()).scan(onProgress)
+        } catch (t: Throwable) {
+            Logger.e("scanLanDevices failed: ${t.message}")
+            emptyList()
+        }
     }
 
     /**

@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -85,6 +86,25 @@ enum class ActivationMode(val label: String, val icon: ImageVector) {
     COMMAND("命令激活", Icons.Filled.Terminal),
 }
 
+/**
+ * Rebuild a [TextFieldValue] after filtering its text, keeping the selection
+ * inside the new bounds.
+ *
+ * Filtering can drop characters before the cursor, which leaves the original
+ * selection pointing past the end of the filtered text. Compose rejects such a
+ * value with an `IllegalArgumentException`, so the offsets are clamped here.
+ */
+private fun sanitizeValue(
+    value: TextFieldValue,
+    maxLength: Int,
+    filter: (Char) -> Boolean = { true },
+): TextFieldValue {
+    val filtered = value.text.filter(filter).take(maxLength)
+    val start = value.selection.start.coerceIn(0, filtered.length)
+    val end = value.selection.end.coerceIn(0, filtered.length)
+    return TextFieldValue(filtered, TextRange(start, end))
+}
+
 @Composable
 fun ActivationScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -103,9 +123,9 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
     var mode by remember { mutableStateOf(ActivationMode.WIRELESS) }
     var codeValue by remember { mutableStateOf(TextFieldValue("")) }
     val code = codeValue.text
-    var tcpPortValue by remember { mutableStateOf(TextFieldValue("5555")) }
+    var tcpPortValue by remember { mutableStateOf(TextFieldValue("5555", TextRange(4))) }
     val tcpPort = tcpPortValue.text
-    var hostValue by remember { mutableStateOf(TextFieldValue(prefs.adbHost)) }
+    var hostValue by remember { mutableStateOf(TextFieldValue(prefs.adbHost, TextRange(prefs.adbHost.length))) }
     val host = hostValue.text
     var commandValue by remember { mutableStateOf(TextFieldValue("")) }
     val command = commandValue.text
@@ -226,74 +246,78 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             when (current) {
                 ActivationMode.WIRELESS -> WirelessPanel(
                     busy = busy,
-                    code = code,
-                    onCodeChange = { codeValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(6)) },
-                    tcpPort = tcpPort,
-                    onTcpPortChange = { tcpPortValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(5)) },
+                    codeValue = codeValue,
+                    onCodeChange = { codeValue = sanitizeValue(it, 6) { ch -> ch.isDigit() } },
+                    portValue = tcpPortValue,
+                    onPortChange = { tcpPortValue = sanitizeValue(it, 5) { ch -> ch.isDigit() } },
                     onStart = {
                         scope.launch {
-                            busy = true
-                            events = emptyList()
-                            step = "发现设备…"
-                            log("开始发现无线调试服务…")
-                            val pairList = withContext(Dispatchers.IO) { manager.discoverPairingServices() }
-                            if (pairList.isEmpty()) {
-                                step = ""
-                                log(
-                                    "未发现配对服务。请确认「开发者选项 → 无线调试」已开启，" +
-                                        "并与本机处于同一局域网；也可改用 TCP 激活或命令激活。",
-                                    true,
-                                )
-                                busy = false
-                                return@launch
-                            }
-                            pairing = pairList
-                            val p = pairList.first()
-                            log("发现配对服务 ${p.host}:${p.port}（${p.instanceName}）")
-                            if (code.isBlank()) {
-                                step = ""
-                                log("请先输入 6 位配对码", true)
-                                busy = false
-                                return@launch
-                            }
-                            step = "配对中…"
-                            log("正在配对…")
-                            val paired = withContext(Dispatchers.IO) { manager.pair(p, code.trim()) }
-                            if (!paired) {
-                                step = ""
-                                log("配对失败，请检查配对码是否正确，并确保手机已弹出配对窗口", true)
-                                busy = false
-                                return@launch
-                            }
-                            step = "连接中…"
-                            log("配对成功，正在连接…")
-                            val connList = withContext(Dispatchers.IO) { manager.discoverConnectServices() }
-                            connecting = connList
-                            val c = connList.firstOrNull()
-                            if (c == null) {
-                                step = ""
-                                log("未发现连接服务，请返回并再次配对", true)
-                                busy = false
-                                return@launch
-                            }
-                            val ok = withContext(Dispatchers.IO) { manager.connect(c) }
-                            if (!ok) {
-                                step = ""
-                                log("连接失败", true)
-                                busy = false
-                                return@launch
-                            }
-                            step = "切换固定端口…"
-                            log("连接成功，shell 权限已获得")
-                            val port = tcpPort.toIntOrNull() ?: 5555
-                            val tcp = withContext(Dispatchers.IO) { manager.enableTcpMode(port) }
-                            if (tcp) log("已切换 ADB 固定端口 $port，下次可用 TCP 激活直连")
-                            step = "校验 Shell…"
-                            val verify = withContext(Dispatchers.IO) { manager.verifyShell() }
-                            if (verify) {
-                                finishSuccess("激活完成")
-                            } else {
-                                finishFailure("连接建立但 shell 校验未通过")
+                            try {
+                                busy = true
+                                events = emptyList()
+                                step = "发现设备…"
+                                log("开始发现无线调试服务…")
+                                val pairList = withContext(Dispatchers.IO) { manager.discoverPairingServices() }
+                                if (pairList.isEmpty()) {
+                                    step = ""
+                                    log(
+                                        "未发现配对服务。请确认「开发者选项 → 无线调试」已开启，" +
+                                            "并与本机处于同一局域网；也可改用 TCP 激活或命令激活。",
+                                        true,
+                                    )
+                                    busy = false
+                                    return@launch
+                                }
+                                pairing = pairList
+                                val p = pairList.first()
+                                log("发现配对服务 ${p.host}:${p.port}（${p.instanceName}）")
+                                if (code.isBlank()) {
+                                    step = ""
+                                    log("请先输入 6 位配对码", true)
+                                    busy = false
+                                    return@launch
+                                }
+                                step = "配对中…"
+                                log("正在配对…")
+                                val paired = withContext(Dispatchers.IO) { manager.pair(p, code.trim()) }
+                                if (!paired) {
+                                    step = ""
+                                    log("配对失败，请检查配对码是否正确，并确保手机已弹出配对窗口", true)
+                                    busy = false
+                                    return@launch
+                                }
+                                step = "连接中…"
+                                log("配对成功，正在连接…")
+                                val connList = withContext(Dispatchers.IO) { manager.discoverConnectServices() }
+                                connecting = connList
+                                val c = connList.firstOrNull()
+                                if (c == null) {
+                                    step = ""
+                                    log("未发现连接服务，请返回并再次配对", true)
+                                    busy = false
+                                    return@launch
+                                }
+                                val ok = withContext(Dispatchers.IO) { manager.connect(c) }
+                                if (!ok) {
+                                    step = ""
+                                    log("连接失败", true)
+                                    busy = false
+                                    return@launch
+                                }
+                                step = "切换固定端口…"
+                                log("连接成功，shell 权限已获得")
+                                val port = tcpPort.toIntOrNull() ?: 5555
+                                val tcp = withContext(Dispatchers.IO) { manager.enableTcpMode(port) }
+                                if (tcp) log("已切换 ADB 固定端口 $port，下次可用 TCP 激活直连")
+                                step = "校验 Shell…"
+                                val verify = withContext(Dispatchers.IO) { manager.verifyShell() }
+                                if (verify) {
+                                    finishSuccess("激活完成")
+                                } else {
+                                    finishFailure("连接建立但 shell 校验未通过")
+                                }
+                            } catch (t: Throwable) {
+                                finishFailure(t.message ?: "无线调试激活异常")
                             }
                         }
                     },
@@ -301,62 +325,74 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
 
                 ActivationMode.TCP -> TcpPanel(
                     busy = busy,
-                    host = host,
+                    hostValue = hostValue,
                     onHostChange = { hostValue = it },
-                    port = tcpPort,
-                    onPortChange = { tcpPortValue = it.copy(text = it.text.filter { ch -> ch.isDigit() }.take(5)) },
+                    portValue = tcpPortValue,
+                    onPortChange = { tcpPortValue = sanitizeValue(it, 5) { ch -> ch.isDigit() } },
                     devices = lanDevices,
                     scanning = lanScanning,
                     progress = lanProgress,
                     onScan = {
                         scope.launch {
-                            lanScanning = true
-                            lanDevices = emptyList()
-                            lanProgress = "准备扫描…"
-                            log("开始扫描局域网 ADB 设备…")
-                            var lastProgress = -1
-                            val found = manager.scanLanDevices { done, total ->
-                                // Throttle: only refresh the label when the percent changes.
-                                val pct = (done * 100) / total.coerceAtLeast(1)
-                                if (pct != lastProgress) {
-                                    lastProgress = pct
-                                    lanProgress = "扫描中 $pct% ($done/$total)"
+                            try {
+                                lanScanning = true
+                                lanDevices = emptyList()
+                                lanProgress = "准备扫描…"
+                                log("开始扫描局域网 ADB 设备…")
+                                var lastProgress = -1
+                                val found = manager.scanLanDevices { done, total ->
+                                    // Throttle: only refresh the label when the percent changes.
+                                    val pct = (done * 100) / total.coerceAtLeast(1)
+                                    if (pct != lastProgress) {
+                                        lastProgress = pct
+                                        withContext(Dispatchers.Main) {
+                                            lanProgress = "扫描中 $pct% ($done/$total)"
+                                        }
+                                    }
                                 }
-                            }
-                            lanScanning = false
-                            lanProgress = ""
-                            lanDevices = found
-                            if (found.isEmpty()) {
-                                log("未发现局域网 ADB 设备，请确认设备已开启 ADB 调试并处于同一网络", true)
-                            } else {
-                                log("发现 ${found.size} 个局域网 ADB 设备")
+                                lanScanning = false
+                                lanProgress = ""
+                                lanDevices = found
+                                if (found.isEmpty()) {
+                                    log("未发现局域网 ADB 设备，请确认设备已开启 ADB 调试并处于同一网络", true)
+                                } else {
+                                    log("发现 ${found.size} 个局域网 ADB 设备")
+                                }
+                            } catch (t: Throwable) {
+                                lanScanning = false
+                                lanProgress = ""
+                                log("局域网扫描异常：${t.message}", true)
                             }
                         }
                     },
                     onPick = { device ->
-                        hostValue = TextFieldValue(device.host)
-                        tcpPortValue = TextFieldValue(device.port.toString())
+                        hostValue = TextFieldValue(device.host, TextRange(device.host.length))
+                        tcpPortValue = TextFieldValue(device.port.toString(), TextRange(device.port.toString().length))
                         log("已选择 ${device.host}:${device.port}${device.model?.let { "（$it）" } ?: ""}")
                     },
                     onStart = {
                         scope.launch {
-                            busy = true
-                            events = emptyList()
-                            val port = tcpPort.toIntOrNull()
-                            if (port == null || port !in 1..65535) {
-                                finishFailure("端口无效，请输入 1-65535 之间的数字")
-                                return@launch
-                            }
-                            step = "TCP 连接中…"
-                            log("正在连接 ${host.trim()}:$port …")
-                            val ok = withContext(Dispatchers.IO) { manager.connectTcp(host.trim(), port) }
-                            if (ok) {
-                                finishSuccess("TCP 激活成功，shell 权限已获得")
-                            } else {
-                                finishFailure(
-                                    "TCP 连接失败。请确认设备已开启 ADB 调试并监听该端口，" +
-                                        "且本机密钥已在设备上授权（可先完成一次无线调试激活）。",
-                                )
+                            try {
+                                busy = true
+                                events = emptyList()
+                                val port = tcpPort.toIntOrNull()
+                                if (port == null || port !in 1..65535) {
+                                    finishFailure("端口无效，请输入 1-65535 之间的数字")
+                                    return@launch
+                                }
+                                step = "TCP 连接中…"
+                                log("正在连接 ${host.trim()}:$port …")
+                                val ok = withContext(Dispatchers.IO) { manager.connectTcp(host.trim(), port) }
+                                if (ok) {
+                                    finishSuccess("TCP 激活成功，shell 权限已获得")
+                                } else {
+                                    finishFailure(
+                                        "TCP 连接失败。请确认设备已开启 ADB 调试并监听该端口，" +
+                                            "且本机密钥已在设备上授权（可先完成一次无线调试激活）。",
+                                    )
+                                }
+                            } catch (t: Throwable) {
+                                finishFailure(t.message ?: "TCP 连接异常")
                             }
                         }
                     },
@@ -364,23 +400,27 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
 
                 ActivationMode.COMMAND -> CommandPanel(
                     busy = busy,
-                    command = command,
+                    commandValue = commandValue,
                     onCommandChange = { commandValue = it },
                     onStart = {
                         scope.launch {
-                            busy = true
-                            events = emptyList()
-                            step = "解析命令…"
-                            log("正在解析命令：${command.trim()}")
-                            val result = withContext(Dispatchers.IO) { manager.activateByCommand(command) }
-                            result.fold(
-                                onSuccess = { (h, p) ->
-                                    finishSuccess("命令激活成功，已连接 $h:$p")
-                                },
-                                onFailure = {
-                                    finishFailure(it.message ?: "命令激活失败")
-                                },
-                            )
+                            try {
+                                busy = true
+                                events = emptyList()
+                                step = "解析命令…"
+                                log("正在解析命令：${command.trim()}")
+                                val result = withContext(Dispatchers.IO) { manager.activateByCommand(command) }
+                                result.fold(
+                                    onSuccess = { (h, p) ->
+                                        finishSuccess("命令激活成功，已连接 $h:$p")
+                                    },
+                                    onFailure = {
+                                        finishFailure(it.message ?: "命令激活失败")
+                                    },
+                                )
+                            } catch (t: Throwable) {
+                                finishFailure(t.message ?: "命令激活异常")
+                            }
                         }
                     },
                 )
@@ -471,10 +511,10 @@ private fun ModeChip(
 @Composable
 private fun WirelessPanel(
     busy: Boolean,
-    code: String,
+    codeValue: TextFieldValue,
     onCodeChange: (TextFieldValue) -> Unit,
-    tcpPort: String,
-    onTcpPortChange: (TextFieldValue) -> Unit,
+    portValue: TextFieldValue,
+    onPortChange: (TextFieldValue) -> Unit,
     onStart: () -> Unit,
 ) {
     SectionCard {
@@ -488,7 +528,7 @@ private fun WirelessPanel(
         )
         SpacerH(12)
         TextField(
-            value = TextFieldValue(code),
+            value = codeValue,
             onValueChange = onCodeChange,
             modifier = Modifier.fillMaxWidth(),
             label = "6 位配对码",
@@ -498,8 +538,8 @@ private fun WirelessPanel(
         )
         SpacerH(10)
         TextField(
-            value = TextFieldValue(tcpPort),
-            onValueChange = onTcpPortChange,
+            value = portValue,
+            onValueChange = onPortChange,
             modifier = Modifier.fillMaxWidth(),
             label = "固定 TCP 端口（默认 5555）",
             useLabelAsPlaceholder = true,
@@ -529,9 +569,9 @@ private fun WirelessPanel(
 @Composable
 private fun TcpPanel(
     busy: Boolean,
-    host: String,
+    hostValue: TextFieldValue,
     onHostChange: (TextFieldValue) -> Unit,
-    port: String,
+    portValue: TextFieldValue,
     onPortChange: (TextFieldValue) -> Unit,
     devices: List<LanScanner.FoundDevice>,
     scanning: Boolean,
@@ -616,7 +656,7 @@ private fun TcpPanel(
         }
         SpacerH(12)
         TextField(
-            value = TextFieldValue(host),
+            value = hostValue,
             onValueChange = onHostChange,
             modifier = Modifier.fillMaxWidth(),
             label = "设备 IP / 主机名",
@@ -626,7 +666,7 @@ private fun TcpPanel(
         )
         SpacerH(10)
         TextField(
-            value = TextFieldValue(port),
+            value = portValue,
             onValueChange = onPortChange,
             modifier = Modifier.fillMaxWidth(),
             label = "端口（默认 5555）",
@@ -657,7 +697,7 @@ private fun TcpPanel(
 @Composable
 private fun CommandPanel(
     busy: Boolean,
-    command: String,
+    commandValue: TextFieldValue,
     onCommandChange: (TextFieldValue) -> Unit,
     onStart: () -> Unit,
 ) {
@@ -672,7 +712,7 @@ private fun CommandPanel(
         )
         SpacerH(12)
         TextField(
-            value = TextFieldValue(command),
+            value = commandValue,
             onValueChange = onCommandChange,
             modifier = Modifier.fillMaxWidth(),
             label = "adb connect 主机:端口",
