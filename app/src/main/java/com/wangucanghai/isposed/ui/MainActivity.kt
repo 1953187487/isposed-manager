@@ -33,8 +33,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
@@ -46,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -58,13 +59,19 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
+import com.wangucanghai.isposed.core.AuthLevel
+import com.wangucanghai.isposed.core.AuthorizationManager
+import com.wangucanghai.isposed.ui.authorization.AuthorizationActivity
 import com.wangucanghai.isposed.ui.home.HomeScreen
+import com.wangucanghai.isposed.ui.intro.IntroScreen
 import com.wangucanghai.isposed.ui.logs.LogsScreen
 import com.wangucanghai.isposed.ui.modules.ModulesScreen
 import com.wangucanghai.isposed.ui.notice.NoticeContent
@@ -86,59 +93,100 @@ import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * Single-activity Compose host with bottom navigation and mandatory agreement gate.
+ * Single-activity Compose host with bottom navigation.
  *
- * Launch sequence: pending update announcement -> onboarding flow (user agreement,
- * language, open-source notice) -> per-launch user agreement reminder -> app shell.
+ * Launch sequence: product introduction -> pending update announcement ->
+ * onboarding flow (user agreement, language, open-source notice) -> app shell.
+ * The agreement reminder stays inside the onboarding flow, so a regular launch
+ * opens the app directly.
  *
  * Copyright (C) 2026 万古沧海
  */
 class MainActivity : BaseActivity() {
 
+    /** Bumped whenever an external app asks for access while the app is alive. */
+    private val accessRequestTick = mutableIntStateOf(0)
+
+    /** Set when the settings screen asks for the product introduction again. */
+    private val introRequest = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        introRequest.value = intent.getBooleanExtra(EXTRA_SHOW_INTRO, false)
         setContent {
             IsposedTheme {
-                LaunchGate(onExit = { finish() })
+                LaunchGate(
+                    onExit = { finish() },
+                    accessRequestTick = accessRequestTick.value,
+                    forceIntro = introRequest.value,
+                )
             }
         }
+        handleAccessIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleAccessIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_SHOW_INTRO, false)) {
+            introRequest.value = true
+        }
+    }
+
+    private fun handleAccessIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(AuthorizationManager.KEY_REQUEST_PENDING, false) == true) {
+            accessRequestTick.value++
+        }
+    }
+
+    companion object {
+        /** Extra that asks the app to show the product introduction again. */
+        const val EXTRA_SHOW_INTRO = "com.wangucanghai.isposed.show_intro"
     }
 }
 
-private enum class Gate { CHANGELOG, ONBOARDING, AGREEMENT, READY }
+private enum class Gate { INTRO, CHANGELOG, ONBOARDING, READY }
 
 @Composable
-private fun LaunchGate(onExit: () -> Unit) {
+private fun LaunchGate(onExit: () -> Unit, accessRequestTick: Int, forceIntro: Boolean = false) {
     val context = LocalContext.current
     val prefs = remember { AppPrefs(context) }
 
     var gate by remember {
         mutableStateOf(
             when {
+                forceIntro -> Gate.INTRO
                 prefs.pendingChangelogVersion.isNotEmpty() -> Gate.CHANGELOG
                 prefs.agreementVersion < NoticeContent.AGREEMENT_VERSION -> Gate.ONBOARDING
-                else -> Gate.AGREEMENT
+                else -> Gate.INTRO
             },
         )
     }
 
     when (gate) {
+        Gate.INTRO -> {
+            IntroScreen(prefs = prefs, force = forceIntro, onFinished = { gate = Gate.READY })
+        }
+
         Gate.CHANGELOG -> {
             OverlayDialog(
                 show = true,
-                title = "更新公告 · v${prefs.pendingChangelogVersion}",
+                title = stringResource(R.string.update_changelog_title, prefs.pendingChangelogVersion),
                 onDismissRequest = {},
             ) {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
-                        text = prefs.pendingChangelogNotes.ifBlank { "本次更新包含功能优化与问题修复。" },
+                        text = prefs.pendingChangelogNotes.ifBlank {
+                            stringResource(R.string.update_changelog_default)
+                        },
                         style = MiuixTheme.textStyles.footnote1,
                         color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     )
                     Spacer(Modifier.height(16.dp))
                     TextButton(
-                        text = "我知道了",
+                        text = stringResource(R.string.update_changelog_ack),
                         onClick = {
                             prefs.pendingChangelogVersion = ""
                             prefs.pendingChangelogNotes = ""
@@ -154,42 +202,11 @@ private fun LaunchGate(onExit: () -> Unit) {
             OnboardingFlow(prefs = prefs, onFinished = { gate = Gate.READY })
         }
 
-        Gate.AGREEMENT -> {
-            OverlayDialog(
-                show = true,
-                title = NoticeContent.USER_AGREEMENT_TITLE,
-                onDismissRequest = { onExit() },
-            ) {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text(
-                        text = NoticeContent.USER_AGREEMENT,
-                        style = MiuixTheme.textStyles.footnote1,
-                        color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    TextButton(
-                        text = "我已阅读并同意",
-                        onClick = {
-                            prefs.agreementAccepted = true
-                            prefs.agreementVersion = NoticeContent.AGREEMENT_VERSION
-                            gate = Gate.READY
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    TextButton(
-                        text = "不同意并退出",
-                        onClick = { onExit() },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-        }
-
-        Gate.READY -> MainScaffold()
+        Gate.READY -> MainScaffold(accessRequestTick = accessRequestTick)
     }
 }
 
-private data class Tab(val id: String, val label: String, val icon: ImageVector)
+private data class Tab(val id: String, val labelRes: Int, val icon: ImageVector)
 
 private const val TAB_HOME = "home"
 private const val TAB_MODULES = "modules"
@@ -197,15 +214,15 @@ private const val TAB_LOGS = "logs"
 private const val TAB_SETTINGS = "settings"
 
 @Composable
-private fun MainScaffold() {
+private fun MainScaffold(accessRequestTick: Int) {
     val context = LocalContext.current
     val prefs = remember { AppPrefs(context) }
     val tabs = remember {
         listOf(
-            Tab(TAB_HOME, "首页", Icons.Filled.Home),
-            Tab(TAB_MODULES, "模块", Icons.Filled.Build),
-            Tab(TAB_LOGS, "日志", Icons.Filled.Terminal),
-            Tab(TAB_SETTINGS, "设置", Icons.Filled.Settings),
+            Tab(TAB_HOME, R.string.nav_home, Icons.Filled.Home),
+            Tab(TAB_MODULES, R.string.nav_modules, Icons.Filled.Build),
+            Tab(TAB_LOGS, R.string.nav_logs, Icons.Filled.Terminal),
+            Tab(TAB_SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
         )
     }
     // The module and log entries only unlock once the device is activated.
@@ -283,12 +300,12 @@ private fun MainScaffold() {
                         Spacer(Modifier.width(10.dp))
                         Column {
                             Text(
-                                "发现新版本 v${pendingUpdate?.latestVersion}",
+                                text = stringResource(R.string.update_found, pendingUpdate?.latestVersion.orEmpty()),
                                 style = MiuixTheme.textStyles.title3,
                                 color = MiuixTheme.colorScheme.onTertiaryContainer,
                             )
                             Text(
-                                "点击查看并更新",
+                                text = stringResource(R.string.update_banner),
                                 style = MiuixTheme.textStyles.footnote1,
                                 color = MiuixTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
                             )
@@ -310,8 +327,8 @@ private fun MainScaffold() {
     if (pendingUpdate != null && promptShown) {
         OverlayDialog(
             show = true,
-            title = "发现新版本 v${pendingUpdate.latestVersion}",
-            summary = pendingUpdate.notes.ifBlank { "包含新功能与问题修复，建议立即更新。" },
+            title = stringResource(R.string.update_prompt_title, pendingUpdate.latestVersion),
+            summary = pendingUpdate.notes.ifBlank { stringResource(R.string.update_prompt_desc) },
             onDismissRequest = { promptShown = false },
         ) {
             Column {
@@ -324,15 +341,83 @@ private fun MainScaffold() {
                     cornerRadius = 14.dp,
                     minHeight = 46.dp,
                 ) {
-                    Text("立即更新")
+                    Text(stringResource(R.string.update_now))
                 }
                 Spacer(Modifier.height(8.dp))
                 TextButton(
-                    text = "稍后再说",
+                    text = stringResource(R.string.update_later),
                     onClick = { promptShown = false },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+        }
+    }
+
+    AccessRequestPrompt(prefs = prefs, trigger = accessRequestTick)
+}
+
+/**
+ * Confirmation dialog for an external application that asks for Shell access.
+ * The request was parked by [com.wangucanghai.isposed.core.AccessRequestReceiver]
+ * while the app was in the background.
+ */
+@Composable
+private fun AccessRequestPrompt(prefs: AppPrefs, trigger: Int) {
+    val context = LocalContext.current
+    var requester by remember { mutableStateOf(prefs.pendingRequester) }
+
+    LaunchedEffect(trigger) {
+        val pending = prefs.pendingRequester
+        if (pending.isNotEmpty()) requester = pending
+    }
+
+    if (requester.isEmpty()) return
+
+    val title = prefs.pendingRequestTitle.ifBlank { requester }
+    val level = runCatching { AuthLevel.valueOf(prefs.pendingRequestLevel) }
+        .getOrDefault(AuthLevel.READ)
+
+    OverlayDialog(
+        show = true,
+        title = stringResource(R.string.auth_request_title),
+        summary = stringResource(R.string.auth_request_message, title),
+        onDismissRequest = {
+            prefs.clearPendingRequest()
+            requester = ""
+        },
+    ) {
+        Column {
+            Button(
+                onClick = {
+                    AuthorizationManager(context).grant(requester, level)
+                    prefs.clearPendingRequest()
+                    requester = ""
+                },
+                modifier = Modifier.fillMaxWidth(),
+                cornerRadius = 14.dp,
+                minHeight = 46.dp,
+            ) {
+                Text(stringResource(R.string.auth_request_allow))
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                text = stringResource(R.string.auth_request_deny),
+                onClick = {
+                    prefs.clearPendingRequest()
+                    requester = ""
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                text = stringResource(R.string.auth_manage),
+                onClick = {
+                    prefs.clearPendingRequest()
+                    requester = ""
+                    context.startActivity(Intent(context, AuthorizationActivity::class.java))
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -400,6 +485,7 @@ private fun NavEntry(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val label = stringResource(tab.labelRes)
     val indicatorColor by animateColorAsState(
         targetValue = if (selected) MiuixTheme.colorScheme.primaryContainer else Color.Transparent,
         animationSpec = tween(260),
@@ -442,7 +528,7 @@ private fun NavEntry(
         ) {
             Icon(
                 imageVector = tab.icon,
-                contentDescription = tab.label,
+                contentDescription = label,
                 tint = MiuixTheme.colorScheme.onSurfaceContainer,
                 modifier = Modifier
                     .size(22.dp)
@@ -458,7 +544,7 @@ private fun NavEntry(
             contentAlignment = Alignment.TopCenter,
         ) {
             Text(
-                text = tab.label,
+                text = label,
                 style = MiuixTheme.textStyles.footnote2,
                 fontWeight = FontWeight.Medium,
                 color = MiuixTheme.colorScheme.onSurfaceContainer,

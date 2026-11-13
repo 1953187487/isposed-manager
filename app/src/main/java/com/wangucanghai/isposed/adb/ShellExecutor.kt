@@ -1,6 +1,7 @@
 package com.wangucanghai.isposed.adb
 
 import android.content.Context
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.util.Logger
 
@@ -36,7 +37,10 @@ class ShellExecutor(private val context: Context, private val prefs: AppPrefs) {
             AdbClient(prefs.adbHost, prefs.adbPort, key).use { c ->
                 c.connect()
                 if (!c.isAuthenticated) {
-                    return@runCatching ShellResult(-1, "设备未授权本机 ADB 密钥，请先完成激活")
+                    return@runCatching ShellResult(
+                        -1,
+                        context.getString(R.string.shell_not_authorized),
+                    )
                 }
                 val out = c.shell(command)
                 Logger.d("[adb] $command -> ${out.take(80)}")

@@ -24,8 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.data.ModuleRepository
 import com.wangucanghai.isposed.ui.components.ScaffoldPage
@@ -54,7 +56,7 @@ class ModuleScopeActivity : BaseActivity() {
         val label = intent.getStringExtra("label") ?: pkg
         setContent {
             IsposedTheme {
-                ScaffoldPage(title = "作用域 · $label", onBack = { finish() }) {
+                ScaffoldPage(title = stringResource(R.string.scope_title_fmt, label), onBack = { finish() }) {
                     ModuleScopeContent(pkg)
                 }
             }
@@ -82,7 +84,7 @@ private fun ModuleScopeContent(pkg: String) {
     }
 
     if (!loaded) {
-        Text("加载中…", color = MiuixTheme.colorScheme.onSurfaceContainerVariant)
+        Text(stringResource(R.string.scope_loading), color = MiuixTheme.colorScheme.onSurfaceContainerVariant)
         return
     }
     LazyColumn(
@@ -119,7 +121,11 @@ private fun ModuleScopeContent(pkg: String) {
                     scope.launch {
                         val repo = ModuleRepository(context)
                         withContext(Dispatchers.IO) { repo.setScope(pkg, selected) }
-                        Toast.makeText(context, "作用域已保存", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.scope_saved),
+                            Toast.LENGTH_SHORT,
+                        ).show()
                         (context as? ComponentActivity)?.finish()
                     }
                 },
@@ -128,7 +134,7 @@ private fun ModuleScopeContent(pkg: String) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(Icons.Filled.Save, contentDescription = null)
-                Text("保存")
+                Text(stringResource(R.string.scope_save))
             }
             SpacerH(28)
         }

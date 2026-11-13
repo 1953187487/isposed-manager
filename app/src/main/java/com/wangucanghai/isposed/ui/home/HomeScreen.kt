@@ -29,7 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.data.ModuleRepository
 import com.wangucanghai.isposed.ui.ActivationActivity
@@ -82,12 +84,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             ) {
                 Column {
                     Text(
-                        text = "Isposed Manager",
+                        text = stringResource(R.string.home_title),
                         style = MiuixTheme.textStyles.headline2,
                         color = MiuixTheme.colorScheme.onBackground,
                     )
                     Text(
-                        text = "免 Root 的 Xposed / LSPosed 管理器",
+                        text = stringResource(R.string.home_tagline),
                         style = MiuixTheme.textStyles.footnote1,
                         color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     )
@@ -108,14 +110,20 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        item { SectionTitle("运行状态") }
+        item { SectionTitle(stringResource(R.string.home_status_title)) }
         item {
             SectionCard {
-                StatRow("已安装模块", "$moduleTotal 个")
-                StatRow("已启用模块", "$moduleEnabled 个")
-                StatRow("日志条目", "$logCount 条")
-                StatRow("ADB 授权", if (active) "已配对" else "未配对")
-                StatRow("Shell 权限", if (active) "可用" else "不可用")
+                StatRow(stringResource(R.string.home_stat_installed), stringResource(R.string.home_count_modules, moduleTotal))
+                StatRow(stringResource(R.string.home_stat_enabled), stringResource(R.string.home_count_modules, moduleEnabled))
+                StatRow(stringResource(R.string.home_stat_logs), stringResource(R.string.home_count_logs, logCount))
+                StatRow(
+                    stringResource(R.string.home_stat_adb),
+                    stringResource(if (active) R.string.home_paired else R.string.home_unpaired),
+                )
+                StatRow(
+                    stringResource(R.string.home_stat_shell_state),
+                    stringResource(if (active) R.string.home_available else R.string.home_unavailable),
+                )
             }
         }
 
@@ -130,9 +138,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     )
                     SpacerH(4)
                     Column {
-                        Text("AI 服务商配置", style = MiuixTheme.textStyles.title3)
+                        Text(stringResource(R.string.settings_ai_config), style = MiuixTheme.textStyles.title3)
                         Text(
-                            text = if (prefs.aiBaseUrl.isEmpty()) "尚未配置 Base URL 与 API Key" else prefs.aiBaseUrl,
+                            text = if (prefs.aiBaseUrl.isEmpty()) stringResource(R.string.not_configured) else prefs.aiBaseUrl,
                             style = MiuixTheme.textStyles.footnote1,
                             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                         )
@@ -169,7 +177,9 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
                     )
                     SpacerH(4)
                     Text(
-                        text = if (active) "已激活" else "未激活",
+                        text = stringResource(
+                            if (active) R.string.activation_active else R.string.activation_inactive,
+                        ),
                         style = MiuixTheme.textStyles.title2,
                         color = MiuixTheme.colorScheme.onPrimaryContainer,
                     )
@@ -182,11 +192,9 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
             }
             SpacerH(10)
             Text(
-                text = if (active) {
-                    "激活授权已建立，可管理模块与执行 Shell 命令。"
-                } else {
-                    "点击进入激活页，通过无线调试、TCP 或命令三种方式获取 Shell 权限，全程无需 Root。"
-                },
+                text = stringResource(
+                    if (active) R.string.home_active_desc else R.string.home_inactive_desc,
+                ),
                 style = MiuixTheme.textStyles.body2,
                 color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
             )
@@ -200,7 +208,7 @@ private fun ActivationCard(active: Boolean, host: String, port: Int, onClick: ()
             } else {
                 SpacerH(8)
                 Text(
-                    text = "激活后可解锁「模块」与「日志」功能。",
+                    text = stringResource(R.string.home_unlock_hint),
                     style = MiuixTheme.textStyles.footnote1,
                     color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                 )

@@ -1,6 +1,7 @@
 package com.wangucanghai.isposed.ai
 
 import android.content.Context
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,13 +36,13 @@ class ModuleCodeGen(private val context: Context) {
             val raw = client.chat(systemPrompt, requirement)
             val files = parseFiles(raw)
             if (files.isEmpty()) {
-                GenResult(false, "AI 未返回有效文件结构：${raw.take(160)}", emptyMap())
+                GenResult(false, context.getString(R.string.ai_dev_invalid_structure, raw.take(160)), emptyMap())
             } else {
-                GenResult(true, "生成 ${files.size} 个文件", files)
+                GenResult(true, context.getString(R.string.ai_dev_files_count, files.size), files)
             }
         } catch (t: Throwable) {
             Logger.e("codegen: ${t.message}")
-            GenResult(false, "生成失败：${t.message}", emptyMap())
+            GenResult(false, context.getString(R.string.ai_dev_failed, t.message ?: ""), emptyMap())
         }
     }
 

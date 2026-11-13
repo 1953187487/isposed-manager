@@ -1,5 +1,7 @@
 package com.wangucanghai.isposed.ui.activation
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
@@ -43,12 +45,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.adb.ActivationManager
-import com.wangucanghai.isposed.adb.LanScanner
+import com.wangucanghai.isposed.adb.DiscoveredDevice
 import com.wangucanghai.isposed.adb.MdnsResolver
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.ui.components.SectionCard
@@ -80,10 +84,10 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  *
  * Copyright (C) 2026 万古沧海
  */
-enum class ActivationMode(val label: String, val icon: ImageVector) {
-    WIRELESS("无线调试", Icons.Filled.BluetoothSearching),
-    TCP("TCP 激活", Icons.Filled.Lan),
-    COMMAND("命令激活", Icons.Filled.Terminal),
+enum class ActivationMode(val labelRes: Int, val icon: ImageVector) {
+    WIRELESS(R.string.activation_mode_wireless, Icons.Filled.BluetoothSearching),
+    TCP(R.string.activation_mode_tcp, Icons.Filled.Lan),
+    COMMAND(R.string.activation_mode_command, Icons.Filled.Terminal),
 }
 
 /**
@@ -117,9 +121,9 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
     var step by remember { mutableStateOf("") }
     var pairing by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
     var connecting by remember { mutableStateOf<List<MdnsResolver.AdbService>>(emptyList()) }
-    var lanDevices by remember { mutableStateOf<List<LanScanner.FoundDevice>>(emptyList()) }
-    var lanScanning by remember { mutableStateOf(false) }
-    var lanProgress by remember { mutableStateOf("") }
+    var devices by remember { mutableStateOf<List<DiscoveredDevice>>(emptyList()) }
+    var scanning by remember { mutableStateOf(false) }
+    var progress by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf(ActivationMode.WIRELESS) }
     var codeValue by remember { mutableStateOf(TextFieldValue("")) }
     val code = codeValue.text
@@ -143,6 +147,11 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
         Logger.i(if (error) "Activation: $msg" else "Activation: $msg")
     }
 
+    fun logRes(res: Int, args: List<Any> = emptyList(), error: Boolean = false) {
+        val msg = context.getString(res, *args.toTypedArray())
+        log(msg, error)
+    }
+
     fun finishSuccess(message: String) {
         active = true
         step = ""
@@ -163,10 +172,10 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             .padding(horizontal = 20.dp),
     ) {
         androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))
-        Text("激活", style = MiuixTheme.textStyles.headline2)
+        Text(stringResource(R.string.activation_title), style = MiuixTheme.textStyles.headline2)
         SpacerH(6)
         Text(
-            text = "三种激活通道任选其一，全程无需 Root。",
+            text = stringResource(R.string.activation_desc),
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
@@ -187,20 +196,28 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                         )
                     }
                     SpacerH(4)
-                    Text("当前状态", style = MiuixTheme.textStyles.title3)
+                    Text(stringResource(R.string.activation_status), style = MiuixTheme.textStyles.title3)
                 }
-                StatusBadge(if (active) "已激活" else "未激活", active)
+                StatusBadge(
+                    if (active) stringResource(R.string.activation_active)
+                    else stringResource(R.string.activation_inactive),
+                    active,
+                )
             }
             SpacerH(10)
             Text(
-                text = if (active) "授权地址：${prefs.adbHost}:${prefs.adbPort}" else "尚未建立 ADB 授权",
+                text = if (active) {
+                    stringResource(R.string.activation_auth_addr, prefs.adbHost, prefs.adbPort)
+                } else {
+                    stringResource(R.string.activation_no_auth)
+                },
                 style = MiuixTheme.textStyles.footnote1,
                 color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
             )
             AnimatedVisibility(visible = busy, enter = fadeIn() + slideInVertically { it / 2 }) {
                 SpacerH(8)
                 Text(
-                    text = step.ifBlank { "正在激活…" },
+                    text = step.ifBlank { stringResource(R.string.activation_in_progress) },
                     style = MiuixTheme.textStyles.footnote2,
                     color = MiuixTheme.colorScheme.primary,
                 )
@@ -208,11 +225,11 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             if (active) {
                 SpacerH(6)
                 TextButton(
-                    text = "断开连接",
+                    text = stringResource(R.string.activation_disconnect),
                     onClick = {
                         manager.deactivate()
                         active = false
-                        log("已断开 ADB 连接")
+                        log(context.getString(R.string.activation_disconnected))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     cornerRadius = 14.dp,
@@ -220,7 +237,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        SectionTitle("激活方式")
+        SectionTitle(stringResource(R.string.activation_methods))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ActivationMode.entries.forEach { m ->
                 ModeChip(
@@ -255,69 +272,67 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                             try {
                                 busy = true
                                 events = emptyList()
-                                step = "发现设备…"
-                                log("开始发现无线调试服务…")
+                                step = context.getString(R.string.activation_step_discover)
+                                log(context.getString(R.string.activation_step_discovering))
                                 val pairList = withContext(Dispatchers.IO) { manager.discoverPairingServices() }
                                 if (pairList.isEmpty()) {
                                     step = ""
-                                    log(
-                                        "未发现配对服务。请确认「开发者选项 → 无线调试」已开启，" +
-                                            "并与本机处于同一局域网；也可改用 TCP 激活或命令激活。",
-                                        true,
-                                    )
+                                    log(context.getString(R.string.activation_step_no_pairing), true)
                                     busy = false
                                     return@launch
                                 }
                                 pairing = pairList
                                 val p = pairList.first()
-                                log("发现配对服务 ${p.host}:${p.port}（${p.instanceName}）")
+                                log(context.getString(R.string.activation_step_pairing_found, p.host, p.port, p.instanceName))
                                 if (code.isBlank()) {
                                     step = ""
-                                    log("请先输入 6 位配对码", true)
+                                    log(context.getString(R.string.activation_step_need_code), true)
                                     busy = false
                                     return@launch
                                 }
-                                step = "配对中…"
-                                log("正在配对…")
+                                step = context.getString(R.string.activation_step_pairing)
+                                log(context.getString(R.string.activation_step_pairing_doing))
                                 val paired = withContext(Dispatchers.IO) { manager.pair(p, code.trim()) }
                                 if (!paired) {
                                     step = ""
-                                    log("配对失败，请检查配对码是否正确，并确保手机已弹出配对窗口", true)
+                                    log(context.getString(R.string.activation_step_pairing_failed), true)
                                     busy = false
                                     return@launch
                                 }
-                                step = "连接中…"
-                                log("配对成功，正在连接…")
+                                step = context.getString(R.string.activation_step_connecting)
+                                log(context.getString(R.string.activation_step_connecting_doing))
                                 val connList = withContext(Dispatchers.IO) { manager.discoverConnectServices() }
                                 connecting = connList
                                 val c = connList.firstOrNull()
                                 if (c == null) {
                                     step = ""
-                                    log("未发现连接服务，请返回并再次配对", true)
+                                    log(context.getString(R.string.activation_step_no_connect), true)
                                     busy = false
                                     return@launch
                                 }
                                 val ok = withContext(Dispatchers.IO) { manager.connect(c) }
                                 if (!ok) {
                                     step = ""
-                                    log("连接失败", true)
+                                    log(context.getString(R.string.activation_step_connect_failed), true)
                                     busy = false
                                     return@launch
                                 }
-                                step = "切换固定端口…"
-                                log("连接成功，shell 权限已获得")
+                                step = context.getString(R.string.activation_step_tcp_mode)
+                                log(context.getString(R.string.activation_step_shell_ok))
                                 val port = tcpPort.toIntOrNull() ?: 5555
                                 val tcp = withContext(Dispatchers.IO) { manager.enableTcpMode(port) }
-                                if (tcp) log("已切换 ADB 固定端口 $port，下次可用 TCP 激活直连")
-                                step = "校验 Shell…"
+                                if (tcp) {
+                                    log(context.getString(R.string.activation_step_port_switched, port))
+                                }
+                                step = context.getString(R.string.activation_step_verify)
                                 val verify = withContext(Dispatchers.IO) { manager.verifyShell() }
                                 if (verify) {
-                                    finishSuccess("激活完成")
+                                    finishSuccess(context.getString(R.string.activation_step_done))
                                 } else {
-                                    finishFailure("连接建立但 shell 校验未通过")
+                                    finishFailure(context.getString(R.string.activation_step_shell_failed))
                                 }
                             } catch (t: Throwable) {
-                                finishFailure(t.message ?: "无线调试激活异常")
+                                finishFailure(t.message ?: context.getString(R.string.activation_step_wireless_exception))
                             }
                         }
                     },
@@ -329,46 +344,57 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                     onHostChange = { hostValue = it },
                     portValue = tcpPortValue,
                     onPortChange = { tcpPortValue = sanitizeValue(it, 5) { ch -> ch.isDigit() } },
-                    devices = lanDevices,
-                    scanning = lanScanning,
-                    progress = lanProgress,
+                    devices = devices,
+                    scanning = scanning,
+                    progress = progress,
                     onScan = {
                         scope.launch {
                             try {
-                                lanScanning = true
-                                lanDevices = emptyList()
-                                lanProgress = "准备扫描…"
-                                log("开始扫描局域网 ADB 设备…")
+                                scanning = true
+                                devices = emptyList()
+                                progress = context.getString(R.string.activation_step_scan_prepare)
+                                events = emptyList()
                                 var lastProgress = -1
-                                val found = manager.scanLanDevices { done, total ->
-                                    // Throttle: only refresh the label when the percent changes.
-                                    val pct = (done * 100) / total.coerceAtLeast(1)
-                                    if (pct != lastProgress) {
-                                        lastProgress = pct
-                                        withContext(Dispatchers.Main) {
-                                            lanProgress = "扫描中 $pct% ($done/$total)"
+                                val found = manager.discoverDevices(
+                                    onLog = { event ->
+                                        logRes(event.messageRes, event.args, event.isError)
+                                    },
+                                    onProgress = { done, total ->
+                                        val pct = (done * 100) / total.coerceAtLeast(1)
+                                        if (pct != lastProgress) {
+                                            lastProgress = pct
+                                            withContext(Dispatchers.Main) {
+                                                progress = context.getString(R.string.activation_step_scan_progress, pct, done, total)
+                                            }
                                         }
-                                    }
-                                }
-                                lanScanning = false
-                                lanProgress = ""
-                                lanDevices = found
+                                    },
+                                )
+                                scanning = false
+                                progress = ""
+                                devices = found
                                 if (found.isEmpty()) {
-                                    log("未发现局域网 ADB 设备，请确认设备已开启 ADB 调试并处于同一网络", true)
+                                    log(context.getString(R.string.activation_step_scan_empty), true)
                                 } else {
-                                    log("发现 ${found.size} 个局域网 ADB 设备")
+                                    log(context.getString(R.string.activation_step_scan_found, found.size))
                                 }
                             } catch (t: Throwable) {
-                                lanScanning = false
-                                lanProgress = ""
-                                log("局域网扫描异常：${t.message}", true)
+                                scanning = false
+                                progress = ""
+                                log(context.getString(R.string.activation_step_scan_exception, t.message ?: ""), true)
                             }
                         }
                     },
                     onPick = { device ->
                         hostValue = TextFieldValue(device.host, TextRange(device.host.length))
                         tcpPortValue = TextFieldValue(device.port.toString(), TextRange(device.port.toString().length))
-                        log("已选择 ${device.host}:${device.port}${device.model?.let { "（$it）" } ?: ""}")
+                        log(
+                            context.getString(
+                                R.string.activation_step_device_selected,
+                                device.host,
+                                device.port,
+                                device.model?.let { "（$it）" } ?: "",
+                            ),
+                        )
                     },
                     onStart = {
                         scope.launch {
@@ -377,22 +403,19 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                                 events = emptyList()
                                 val port = tcpPort.toIntOrNull()
                                 if (port == null || port !in 1..65535) {
-                                    finishFailure("端口无效，请输入 1-65535 之间的数字")
+                                    finishFailure(context.getString(R.string.activation_step_port_invalid))
                                     return@launch
                                 }
-                                step = "TCP 连接中…"
-                                log("正在连接 ${host.trim()}:$port …")
+                                step = context.getString(R.string.activation_step_tcp_connecting)
+                                log(context.getString(R.string.activation_step_tcp_doing, host.trim(), port))
                                 val ok = withContext(Dispatchers.IO) { manager.connectTcp(host.trim(), port) }
                                 if (ok) {
-                                    finishSuccess("TCP 激活成功，shell 权限已获得")
+                                    finishSuccess(context.getString(R.string.activation_step_tcp_ok))
                                 } else {
-                                    finishFailure(
-                                        "TCP 连接失败。请确认设备已开启 ADB 调试并监听该端口，" +
-                                            "且本机密钥已在设备上授权（可先完成一次无线调试激活）。",
-                                    )
+                                    finishFailure(context.getString(R.string.activation_step_tcp_failed))
                                 }
                             } catch (t: Throwable) {
-                                finishFailure(t.message ?: "TCP 连接异常")
+                                finishFailure(t.message ?: context.getString(R.string.activation_step_tcp_exception))
                             }
                         }
                     },
@@ -407,19 +430,19 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                             try {
                                 busy = true
                                 events = emptyList()
-                                step = "解析命令…"
-                                log("正在解析命令：${command.trim()}")
+                                step = context.getString(R.string.activation_step_cmd_parse)
+                                log(context.getString(R.string.activation_step_cmd_doing, command.trim()))
                                 val result = withContext(Dispatchers.IO) { manager.activateByCommand(command) }
                                 result.fold(
                                     onSuccess = { (h, p) ->
-                                        finishSuccess("命令激活成功，已连接 $h:$p")
+                                        finishSuccess(context.getString(R.string.activation_step_cmd_ok, h, p))
                                     },
                                     onFailure = {
-                                        finishFailure(it.message ?: "命令激活失败")
+                                        finishFailure(it.message ?: context.getString(R.string.activation_step_cmd_failed))
                                     },
                                 )
                             } catch (t: Throwable) {
-                                finishFailure(t.message ?: "命令激活异常")
+                                finishFailure(t.message ?: context.getString(R.string.activation_step_cmd_exception))
                             }
                         }
                     },
@@ -428,8 +451,8 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
         }
 
         if (pairing.isNotEmpty() && mode == ActivationMode.WIRELESS) {
-            SectionTitle("发现的服务")
-            Text("配对服务", style = MiuixTheme.textStyles.footnote2)
+            SectionTitle(stringResource(R.string.activation_services))
+            Text(stringResource(R.string.activation_pairing_services), style = MiuixTheme.textStyles.footnote2)
             pairing.forEach { svc ->
                 Text(
                     "${svc.instanceName}  ${svc.host}:${svc.port}",
@@ -439,7 +462,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             }
         }
         if (connecting.isNotEmpty() && mode == ActivationMode.WIRELESS) {
-            SectionTitle("连接服务")
+            SectionTitle(stringResource(R.string.activation_connect_services))
             connecting.forEach { svc ->
                 Text(
                     "${svc.instanceName}  ${svc.host}:${svc.port}",
@@ -449,7 +472,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        SectionTitle("激活日志")
+        SectionTitle(stringResource(R.string.activation_log_title))
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -462,7 +485,7 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
             ) {
                 if (events.isEmpty()) {
                     Text(
-                        "尚无日志",
+                        stringResource(R.string.activation_log_empty),
                         style = MiuixTheme.textStyles.footnote1,
                         color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     )
@@ -476,6 +499,18 @@ fun ActivationScreen(modifier: Modifier = Modifier) {
                     )
                 }
             }
+        }
+        if (events.isNotEmpty()) {
+            TextButton(
+                text = stringResource(R.string.copy_log),
+                onClick = {
+                    val text = events.joinToString("\n") { it.first }
+                    val cm = context.getSystemService(ClipboardManager::class.java)
+                    cm?.setPrimaryClip(ClipData.newPlainText("activation_log", text))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                cornerRadius = 14.dp,
+            )
         }
         androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = 28.dp))
     }
@@ -503,7 +538,7 @@ private fun ModeChip(
         ) {
             Icon(mode.icon, contentDescription = null, modifier = Modifier.size(20.dp))
             SpacerH(4)
-            Text(mode.label, style = MiuixTheme.textStyles.footnote2)
+            Text(stringResource(mode.labelRes), style = MiuixTheme.textStyles.footnote2)
         }
     }
 }
@@ -518,11 +553,10 @@ private fun WirelessPanel(
     onStart: () -> Unit,
 ) {
     SectionCard {
-        Text("无线调试激活", style = MiuixTheme.textStyles.title3)
+        Text(stringResource(R.string.activation_wireless_title), style = MiuixTheme.textStyles.title3)
         SpacerH(6)
         Text(
-            text = "适用于 Android 11 及以上。依次开启「开发者选项 → 无线调试」，" +
-                "在「使用配对码配对设备」中获取 6 位配对码并填入下方。",
+            text = stringResource(R.string.activation_wireless_desc),
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
@@ -531,7 +565,7 @@ private fun WirelessPanel(
             value = codeValue,
             onValueChange = onCodeChange,
             modifier = Modifier.fillMaxWidth(),
-            label = "6 位配对码",
+            label = stringResource(R.string.activation_wireless_code),
             useLabelAsPlaceholder = true,
             singleLine = true,
             cornerRadius = 14.dp,
@@ -541,7 +575,7 @@ private fun WirelessPanel(
             value = portValue,
             onValueChange = onPortChange,
             modifier = Modifier.fillMaxWidth(),
-            label = "固定 TCP 端口（默认 5555）",
+            label = stringResource(R.string.activation_wireless_port),
             useLabelAsPlaceholder = true,
             singleLine = true,
             cornerRadius = 14.dp,
@@ -556,11 +590,11 @@ private fun WirelessPanel(
             if (busy) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 SpacerH(4)
-                Text("激活中…")
+                Text(stringResource(R.string.activation_wireless_running))
             } else {
                 Icon(Icons.Filled.RocketLaunch, contentDescription = null, modifier = Modifier.size(18.dp))
                 SpacerH(4)
-                Text("开始无线调试激活")
+                Text(stringResource(R.string.activation_wireless_start))
             }
         }
     }
@@ -573,19 +607,18 @@ private fun TcpPanel(
     onHostChange: (TextFieldValue) -> Unit,
     portValue: TextFieldValue,
     onPortChange: (TextFieldValue) -> Unit,
-    devices: List<LanScanner.FoundDevice>,
+    devices: List<DiscoveredDevice>,
     scanning: Boolean,
     progress: String,
     onScan: () -> Unit,
-    onPick: (LanScanner.FoundDevice) -> Unit,
+    onPick: (DiscoveredDevice) -> Unit,
     onStart: () -> Unit,
 ) {
     SectionCard {
-        Text("TCP 激活", style = MiuixTheme.textStyles.title3)
+        Text(stringResource(R.string.activation_tcp_title), style = MiuixTheme.textStyles.title3)
         SpacerH(6)
         Text(
-            text = "设备已通过「adb tcpip 端口」开启明文 ADB 调试时使用。可先自动扫描局域网内可连接的设备，" +
-                "也可直接填入设备 IP 与端口。",
+            text = stringResource(R.string.activation_tcp_desc),
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
@@ -610,7 +643,8 @@ private fun TcpPanel(
                 }
                 SpacerH(6)
                 Text(
-                    text = if (scanning) progress.ifBlank { "正在扫描…" } else "扫描局域网设备",
+                    text = if (scanning) progress.ifBlank { stringResource(R.string.activation_tcp_scanning) }
+                    else stringResource(R.string.activation_tcp_scan),
                     style = MiuixTheme.textStyles.button,
                 )
             }
@@ -618,39 +652,13 @@ private fun TcpPanel(
         if (devices.isNotEmpty()) {
             SpacerH(10)
             Text(
-                text = "发现 ${devices.size} 个设备，点击即可填入",
+                text = stringResource(R.string.activation_tcp_found, devices.size),
                 style = MiuixTheme.textStyles.footnote2,
                 color = MiuixTheme.colorScheme.primary,
             )
             SpacerH(6)
             devices.forEach { device ->
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onPick(device) },
-                    shape = RoundedCornerShape(12.dp),
-                    color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    contentColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text(
-                            text = "${device.host}:${device.port}",
-                            style = MiuixTheme.textStyles.footnote1,
-                            color = MiuixTheme.colorScheme.onSurface,
-                        )
-                        if (device.model != null) {
-                            Text(
-                                text = device.model,
-                                style = MiuixTheme.textStyles.footnote1,
-                                color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
-                            )
-                        }
-                    }
-                }
+                DeviceRow(device = device, onPick = { onPick(device) })
                 SpacerH(6)
             }
         }
@@ -659,7 +667,7 @@ private fun TcpPanel(
             value = hostValue,
             onValueChange = onHostChange,
             modifier = Modifier.fillMaxWidth(),
-            label = "设备 IP / 主机名",
+            label = stringResource(R.string.activation_tcp_host),
             useLabelAsPlaceholder = true,
             singleLine = true,
             cornerRadius = 14.dp,
@@ -669,7 +677,7 @@ private fun TcpPanel(
             value = portValue,
             onValueChange = onPortChange,
             modifier = Modifier.fillMaxWidth(),
-            label = "端口（默认 5555）",
+            label = stringResource(R.string.activation_tcp_port),
             useLabelAsPlaceholder = true,
             singleLine = true,
             cornerRadius = 14.dp,
@@ -684,11 +692,57 @@ private fun TcpPanel(
             if (busy) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 SpacerH(4)
-                Text("连接中…")
+                Text(stringResource(R.string.activation_tcp_connecting))
             } else {
                 Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
                 SpacerH(4)
-                Text("连接 TCP 设备")
+                Text(stringResource(R.string.activation_tcp_connect))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeviceRow(device: DiscoveredDevice, onPick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onPick,
+        shape = RoundedCornerShape(12.dp),
+        color = MiuixTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        contentColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(
+                text = device.endpoint,
+                style = MiuixTheme.textStyles.footnote1,
+                color = MiuixTheme.colorScheme.onSurface,
+            )
+            if (device.model != null) {
+                Text(
+                    text = device.model,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+                )
+            }
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MiuixTheme.colorScheme.primaryContainer,
+            ) {
+                Text(
+                    text = when {
+                        device.tls -> stringResource(R.string.activation_tcp_badge_tls)
+                        device.authorized -> stringResource(R.string.activation_tcp_badge_authorized)
+                        else -> stringResource(R.string.activation_tcp_badge_pending)
+                    },
+                    style = MiuixTheme.textStyles.footnote2,
+                    color = MiuixTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                )
             }
         }
     }
@@ -702,11 +756,10 @@ private fun CommandPanel(
     onStart: () -> Unit,
 ) {
     SectionCard {
-        Text("命令激活", style = MiuixTheme.textStyles.title3)
+        Text(stringResource(R.string.activation_command_title), style = MiuixTheme.textStyles.title3)
         SpacerH(6)
         Text(
-            text = "直接输入 ADB 连接命令，例如 adb connect 192.168.1.2:5555，" +
-                "也可只填 192.168.1.2:5555。应用会解析地址并完成 TCP 激活。",
+            text = stringResource(R.string.activation_command_desc),
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
@@ -715,7 +768,7 @@ private fun CommandPanel(
             value = commandValue,
             onValueChange = onCommandChange,
             modifier = Modifier.fillMaxWidth(),
-            label = "adb connect 主机:端口",
+            label = stringResource(R.string.activation_command_field),
             useLabelAsPlaceholder = true,
             singleLine = true,
             cornerRadius = 14.dp,
@@ -730,11 +783,11 @@ private fun CommandPanel(
             if (busy) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 SpacerH(4)
-                Text("执行中…")
+                Text(stringResource(R.string.activation_command_running))
             } else {
                 Icon(Icons.Filled.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
                 SpacerH(4)
-                Text("执行激活命令")
+                Text(stringResource(R.string.activation_command_run))
             }
         }
     }

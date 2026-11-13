@@ -83,6 +83,29 @@
             android:name=".ui.UpdateActivity"
             android:exported="false"
             android:label="@string/update_title" />
+        <activity
+            android:name=".ui.authorization.AuthorizationActivity"
+            android:exported="false"
+            android:label="@string/auth_title" />
+        <activity
+            android:name=".ui.credits.CreditsActivity"
+            android:exported="false"
+            android:label="@string/credits_title" />
+
+        <receiver
+            android:name=".core.AccessRequestReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.wangucanghai.isposed.action.REQUEST_ACCESS" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".core.QueryAccessReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.wangucanghai.isposed.action.QUERY_ACCESS" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

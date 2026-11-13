@@ -1,9 +1,7 @@
 package com.wangucanghai.isposed.adb
 
 import com.wangucanghai.isposed.util.Logger
-import java.net.Inet4Address
 import java.net.InetSocketAddress
-import java.net.NetworkInterface
 import java.net.Socket
 import java.security.KeyPair
 import java.security.Signature
@@ -21,11 +19,12 @@ import kotlinx.coroutines.withContext
 /**
  * Plain-ADB-over-TCP LAN discovery.
  *
- * Walks every local IPv4 subnet (/24) and probes common ADB TCP ports to find
- * devices that already run `adb tcpip`. Each candidate is confirmed with an
- * ADB CNXN/CNXN-handshake so only real ADB daemons are listed, and the
- * connection banner is parsed to surface the device model. This lets the user
- * pick a device instead of typing its IP manually.
+ * Walks every local IPv4 subnet reported by the platform network stack and
+ * probes common ADB TCP ports to find devices that already run `adb tcpip`.
+ * Each candidate is confirmed with an ADB CNXN/CNXN-handshake so only real
+ * ADB daemons are listed, and the connection banner is parsed to surface the
+ * device model. This lets the user pick a device instead of typing its IP
+ * manually.
  *
  * Copyright (C) 2026 万古沧海
  */
@@ -55,46 +54,21 @@ class LanScanner(private val keyPair: KeyPair? = null) {
         private const val AUTH_SIGNATURE = 2
     }
 
-    /** Enumerate the local /24 subnets that hold a usable IPv4 interface. */
-    fun localSubnets(): List<String> {
-        val subnets = mutableListOf<String>()
-        try {
-            val interfaces = NetworkInterface.getNetworkInterfaces() ?: return emptyList()
-            for (nif in interfaces) {
-                if (!nif.isUp || nif.isLoopback) continue
-                for (addr in nif.inetAddresses) {
-                    if (addr is Inet4Address && !addr.isLoopbackAddress && !addr.isLinkLocalAddress) {
-                        val ip = addr.hostAddress ?: continue
-                        if (ip.startsWith("169.254.")) continue
-                        val parts = ip.split('.')
-                        if (parts.size == 4) {
-                            subnets += "${parts[0]}.${parts[1]}.${parts[2]}"
-                        }
-                    }
-                }
-            }
-        } catch (t: Throwable) {
-            Logger.w("LanScanner subnet enumeration failed: ${t.message}")
-        }
-        return subnets.distinct()
-    }
-
     /**
-     * Scan every local subnet for [SCAN_PORTS], returning devices that answered
-     * an ADB handshake. [onProgress] receives (done, total) probe counts.
+     * Scan [networks] for [SCAN_PORTS], returning devices that answered an ADB
+     * handshake. [onProgress] receives (done, total) probe counts.
      */
     suspend fun scan(
+        networks: List<NetworkDiscovery.LocalNetwork>,
         onProgress: suspend (done: Int, total: Int) -> Unit = { _, _ -> },
     ): List<FoundDevice> = withContext(Dispatchers.IO) {
-        val subnets = localSubnets()
-        if (subnets.isEmpty()) return@withContext emptyList()
+        val hosts = NetworkDiscovery.candidateHosts(networks)
+        if (hosts.isEmpty()) return@withContext emptyList()
 
         val targets = buildList {
-            for (subnet in subnets) {
-                for (host in 1..254) {
-                    for (port in SCAN_PORTS) {
-                        add("$subnet.$host" to port)
-                    }
+            for (host in hosts) {
+                for (port in SCAN_PORTS) {
+                    add(host to port)
                 }
             }
         }

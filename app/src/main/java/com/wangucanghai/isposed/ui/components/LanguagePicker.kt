@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.core.LocaleHelper
 import top.yukonga.miuix.kmp.basic.Icon
@@ -28,10 +29,23 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  */
 data class LanguageOption(val code: String, val title: String, val desc: String)
 
-val LANGUAGE_OPTIONS = listOf(
-    LanguageOption(LocaleHelper.LANGUAGE_SYSTEM, "跟随系统", "使用设备当前语言"),
-    LanguageOption(LocaleHelper.LANGUAGE_ZH, "简体中文", "中文界面"),
-    LanguageOption(LocaleHelper.LANGUAGE_EN, "English", "English interface"),
+@Composable
+fun languageOptions(): List<LanguageOption> = listOf(
+    LanguageOption(
+        LocaleHelper.LANGUAGE_SYSTEM,
+        stringResource(R.string.lang_system),
+        stringResource(R.string.lang_system_desc),
+    ),
+    LanguageOption(
+        LocaleHelper.LANGUAGE_ZH,
+        stringResource(R.string.lang_zh),
+        stringResource(R.string.lang_zh_desc),
+    ),
+    LanguageOption(
+        LocaleHelper.LANGUAGE_EN,
+        stringResource(R.string.lang_en),
+        stringResource(R.string.lang_en_desc),
+    ),
 )
 
 @Composable
@@ -41,9 +55,14 @@ fun LanguagePickerDialog(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    OverlayDialog(show = show, title = "界面语言", onDismissRequest = onDismiss) {
+    val options = languageOptions()
+    OverlayDialog(
+        show = show,
+        title = stringResource(R.string.lang_title),
+        onDismissRequest = onDismiss,
+    ) {
         Column {
-            LANGUAGE_OPTIONS.forEach { option ->
+            options.forEach { option ->
                 val selected = option.code == prefs.appLanguage
                 Row(
                     modifier = Modifier
@@ -80,7 +99,7 @@ fun LanguagePickerDialog(
             SpacerH(4)
             SpacerH(8)
             Text(
-                text = "切换后立即生效",
+                text = stringResource(R.string.lang_applied_now),
                 style = MiuixTheme.textStyles.footnote2,
                 color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 modifier = Modifier.padding(horizontal = 4.dp),

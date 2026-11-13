@@ -33,11 +33,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.core.LocaleHelper
 import com.wangucanghai.isposed.ui.components.SpacerH
+import com.wangucanghai.isposed.ui.components.languageOptions
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
@@ -53,11 +56,14 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * Mandatory onboarding flow: user agreement -> language -> open-source notice.
  *
  * Blocks the whole app until the user walks through every step. The flow runs
- * on first launch, whenever the agreement version changes, and right after an
- * in-app update finishes.
+ * on first launch and whenever the agreement version changes. Reading
+ * confirmations stay optional, so the user can always continue to the next
+ * step.
  *
  * Copyright (C) 2026 万古沧海
  */
+private const val ONBOARDING_STEPS = 3
+
 @Composable
 fun OnboardingFlow(
     prefs: AppPrefs,
@@ -73,7 +79,7 @@ fun OnboardingFlow(
     var language by remember { mutableStateOf(prefs.appLanguage) }
 
     val progress by animateFloatAsState(
-        targetValue = (step + 1) / 3f,
+        targetValue = (step + 1) / ONBOARDING_STEPS.toFloat(),
         animationSpec = tween(320),
         label = "onboardingProgress",
     )
@@ -88,13 +94,13 @@ fun OnboardingFlow(
         ) {
             SpacerH(20)
             Text(
-                text = "欢迎使用 Isposed Manager",
+                text = stringResource(R.string.onboarding_title),
                 style = MiuixTheme.textStyles.headline2,
                 color = MiuixTheme.colorScheme.onBackground,
             )
             SpacerH(6)
             Text(
-                text = "完成以下 ${3} 步即可开始使用",
+                text = stringResource(R.string.onboarding_desc, ONBOARDING_STEPS),
                 style = MiuixTheme.textStyles.body2,
                 color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
             )
@@ -118,8 +124,8 @@ fun OnboardingFlow(
             ) { current ->
                 when (current) {
                     0 -> AgreementStep(
-                        title = NoticeContent.USER_AGREEMENT_TITLE,
-                        text = NoticeContent.USER_AGREEMENT,
+                        title = stringResource(R.string.notice_agreement_title),
+                        text = stringResource(R.string.notice_agreement_body),
                         checked = agreed,
                         onToggle = { agreed = !agreed },
                     )
@@ -130,7 +136,8 @@ fun OnboardingFlow(
                     )
 
                     else -> OssStep(
-                        text = NoticeContent.OSS_NOTICE,
+                        title = stringResource(R.string.notice_oss_title),
+                        text = stringResource(R.string.notice_oss_body),
                         checked = ossAccepted,
                         onToggle = { ossAccepted = !ossAccepted },
                     )
@@ -144,7 +151,7 @@ fun OnboardingFlow(
             ) {
                 if (step > 0) {
                     TextButton(
-                        text = "上一步",
+                        text = stringResource(R.string.onboarding_prev),
                         onClick = { step -= 1 },
                         modifier = Modifier.weight(1f),
                         cornerRadius = 14.dp,
@@ -153,15 +160,11 @@ fun OnboardingFlow(
                 Button(
                     onClick = {
                         when (step) {
-                            0 -> {
-                                agreed = true
-                                step = 1
-                            }
+                            0 -> step = 1
 
                             1 -> step = 2
 
                             else -> {
-                                ossAccepted = true
                                 prefs.agreementAccepted = true
                                 prefs.agreementVersion = NoticeContent.AGREEMENT_VERSION
                                 prefs.aiNoticeAccepted = true
@@ -180,16 +183,16 @@ fun OnboardingFlow(
                 ) {
                     Text(
                         when (step) {
-                            0 -> "同意并继续"
-                            1 -> "下一步"
-                            else -> "同意并开始使用"
+                            0 -> stringResource(R.string.onboarding_next)
+                            1 -> stringResource(R.string.onboarding_next)
+                            else -> stringResource(R.string.onboarding_finish)
                         },
                     )
                 }
             }
             SpacerH(10)
             Text(
-                text = "不同意将无法使用本软件。作者：万古沧海（B站同名）",
+                text = stringResource(R.string.onboarding_footer),
                 style = MiuixTheme.textStyles.footnote1,
                 color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 modifier = Modifier.padding(bottom = 20.dp),
@@ -228,9 +231,15 @@ private fun AgreementStep(
         NoticeBlock(title = title, text = text)
         SpacerH(12)
         AgreeRow(
-            label = "我已阅读并同意《${title}》",
+            label = stringResource(R.string.onboarding_agree_label, title),
             checked = checked,
             onToggle = onToggle,
+        )
+        SpacerH(6)
+        Text(
+            text = stringResource(R.string.onboarding_consent_desc),
+            style = MiuixTheme.textStyles.footnote2,
+            color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
         SpacerH(12)
     }
@@ -238,18 +247,16 @@ private fun AgreementStep(
 
 @Composable
 private fun OssStep(
+    title: String,
     text: String,
     checked: Boolean,
     onToggle: () -> Unit,
 ) {
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        NoticeBlock(
-            title = NoticeContent.OSS_NOTICE_TITLE,
-            text = text,
-        )
+        NoticeBlock(title = title, text = text)
         SpacerH(12)
         AgreeRow(
-            label = "我已阅读并同意《${NoticeContent.OSS_NOTICE_TITLE}》",
+            label = stringResource(R.string.onboarding_agree_label, title),
             checked = checked,
             onToggle = onToggle,
         )
@@ -257,37 +264,26 @@ private fun OssStep(
     }
 }
 
-private data class LanguageOption(
-    val code: String,
-    val title: String,
-    val desc: String,
-)
-
-private val LANGUAGE_OPTIONS = listOf(
-    LanguageOption(LocaleHelper.LANGUAGE_SYSTEM, "跟随系统", "使用设备当前语言"),
-    LanguageOption(LocaleHelper.LANGUAGE_ZH, "简体中文", "中文界面"),
-    LanguageOption(LocaleHelper.LANGUAGE_EN, "English", "English interface"),
-)
-
 @Composable
 private fun LanguageStep(
     selected: String,
     onSelect: (String) -> Unit,
 ) {
+    val options = languageOptions()
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Text(
-            text = "选择界面语言",
+            text = stringResource(R.string.onboarding_language_title),
             style = MiuixTheme.textStyles.title2,
             color = MiuixTheme.colorScheme.onSurface,
         )
         SpacerH(4)
         Text(
-            text = "语言设置随时可在设置中调整。",
+            text = stringResource(R.string.onboarding_language_desc),
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         )
         SpacerH(12)
-        LANGUAGE_OPTIONS.forEach { option ->
+        options.forEach { option ->
             NoticeBlock(
                 title = option.title,
                 text = option.desc,

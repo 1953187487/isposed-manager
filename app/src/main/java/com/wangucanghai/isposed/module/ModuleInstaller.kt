@@ -1,6 +1,7 @@
 package com.wangucanghai.isposed.module
 
 import android.content.Context
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.adb.ShellExecutor
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.core.Constants
@@ -101,7 +102,8 @@ class ModuleInstaller(
      * Install a module ZIP. Returns result; caller should offer Re-ignite.
      */
     fun install(zipPath: String): InstallResult {
-        val prop = parseModuleProp(zipPath) ?: return InstallResult(false, "module.prop 缺失或 id 不合法", null)
+        val prop = parseModuleProp(zipPath)
+            ?: return InstallResult(false, context.getString(R.string.modules_prop_invalid), null)
         val pluginDir = Constants.AXERON_PLUGIN_DIR + "/" + prop.id
         val dest = File(context.cacheDir, "module_extract_" + prop.id)
         if (dest.exists()) dest.deleteRecursively()
@@ -148,17 +150,21 @@ class ModuleInstaller(
                 Logger.i("auto-converted ${prop.id} entry=$entry")
                 InstallResult(
                     true,
-                    "模块 ${prop.name} v${prop.version} 已安装并自动转换为可用模块，需热重启生效",
+                    context.getString(R.string.modules_installed_converted, prop.name, prop.version),
                     prop,
                     autoConverted = true,
                     entryPoint = entry,
                 )
             } else {
-                InstallResult(true, "模块 ${prop.name} v${prop.version} 已安装，需热重启生效", prop)
+                InstallResult(
+                    true,
+                    context.getString(R.string.modules_installed, prop.name, prop.version),
+                    prop,
+                )
             }
         } catch (t: Throwable) {
             Logger.e("Install failed: ${t.message}")
-            InstallResult(false, "安装失败：${t.message}", prop)
+            InstallResult(false, context.getString(R.string.modules_install_failed_detail, t.message ?: ""), prop)
         } finally {
             dest.deleteRecursively()
         }

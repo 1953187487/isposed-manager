@@ -22,8 +22,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.ai.AiClient
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.ui.components.ScaffoldPage
@@ -54,7 +56,7 @@ class AiConfigActivity : BaseActivity() {
         enableEdgeToEdge()
         setContent {
             IsposedTheme {
-                ScaffoldPage(title = "AI 服务商配置", onBack = { finish() }) {
+                ScaffoldPage(title = stringResource(R.string.ai_config), onBack = { finish() }) {
                     AiConfigContent()
                 }
             }
@@ -81,7 +83,7 @@ private fun AiConfigContent() {
             value = baseUrl,
             onValueChange = { baseUrl = it },
             modifier = Modifier.fillMaxWidth(),
-            label = "Base URL",
+            label = stringResource(R.string.ai_base_url),
             singleLine = true,
             cornerRadius = 14.dp,
         )
@@ -90,7 +92,7 @@ private fun AiConfigContent() {
             value = apiKey,
             onValueChange = { apiKey = it },
             modifier = Modifier.fillMaxWidth(),
-            label = "API Key",
+            label = stringResource(R.string.ai_api_key),
             singleLine = true,
             cornerRadius = 14.dp,
         )
@@ -99,12 +101,15 @@ private fun AiConfigContent() {
             value = model,
             onValueChange = { model = it },
             modifier = Modifier.fillMaxWidth(),
-            label = "模型",
+            label = stringResource(R.string.ai_model),
             singleLine = true,
             cornerRadius = 14.dp,
         )
         SpacerH(10)
-        Text("温度：${"%.2f".format(temp)}", style = MiuixTheme.textStyles.footnote1)
+        Text(
+            text = stringResource(R.string.ai_temperature, "%.2f".format(temp)),
+            style = MiuixTheme.textStyles.footnote1,
+        )
         Slider(
             value = temp,
             onValueChange = { temp = it },
@@ -119,25 +124,25 @@ private fun AiConfigContent() {
             prefs.aiApiKey = apiKey.text.trim()
             prefs.aiModel = model.text.trim()
             prefs.aiTemperature = temp
-            Toast.makeText(context, "已保存", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.saved), Toast.LENGTH_SHORT).show()
             Logger.i("AI config saved")
         },
         cornerRadius = 14.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text("保存")
+        Text(stringResource(R.string.ai_save))
     }
     SpacerH(10)
     Button(
         onClick = {
             prefs.aiBaseUrl = baseUrl.text.trim()
             prefs.aiApiKey = apiKey.text.trim()
-            result = "拉取模型中…"
+            result = context.getString(R.string.ai_pulling)
             busy = true
             scope.launch {
                 val models = withContext(Dispatchers.IO) { runCatching { client.listModels() }.getOrDefault(emptyList()) }
-                result = if (models.isEmpty()) "未获取到模型（检查 Base URL / Key）"
-                else "模型列表：\n" + models.joinToString("\n")
+                result = if (models.isEmpty()) context.getString(R.string.ai_pull_failed)
+                else context.getString(R.string.ai_model_list, models.joinToString("\n"))
                 if (model.text.isBlank()) model = TextFieldValue(models.firstOrNull().orEmpty())
                 busy = false
             }
@@ -146,7 +151,7 @@ private fun AiConfigContent() {
         cornerRadius = 14.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text("拉取模型")
+        Text(stringResource(R.string.ai_pull_models))
     }
     SpacerH(10)
     Button(
@@ -155,14 +160,17 @@ private fun AiConfigContent() {
             prefs.aiApiKey = apiKey.text.trim()
             prefs.aiModel = model.text.trim()
             val m = model.text.trim()
-            if (m.isEmpty()) { Toast.makeText(context, "请填写模型名", Toast.LENGTH_SHORT).show(); return@Button }
-            result = "测试中…"
+            if (m.isEmpty()) {
+                Toast.makeText(context, context.getString(R.string.ai_model_required), Toast.LENGTH_SHORT).show()
+                return@Button
+            }
+            result = context.getString(R.string.ai_testing)
             busy = true
             scope.launch {
                 val r = withContext(Dispatchers.IO) { runCatching { client.testModel(m) } }
                 result = r.fold(
-                    onSuccess = { "测试成功：$it" },
-                    onFailure = { "测试失败：${it.message}" }
+                    onSuccess = { context.getString(R.string.ai_test_ok, it) },
+                    onFailure = { context.getString(R.string.ai_test_failed, it.message ?: "") },
                 )
                 busy = false
             }
@@ -171,7 +179,7 @@ private fun AiConfigContent() {
         cornerRadius = 14.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text("测试模型")
+        Text(stringResource(R.string.ai_test_model))
     }
     if (result.isNotEmpty()) {
         SpacerH(16)
@@ -184,10 +192,10 @@ private fun AiConfigContent() {
         }
     }
     SpacerH(16)
-    SectionTitle("AI 使用须知")
+    SectionTitle(stringResource(R.string.notice_ai_title))
     SectionCard {
         Text(
-            text = NoticeContent.AI_NOTICE,
+            text = stringResource(R.string.notice_ai_body),
             style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
             modifier = Modifier.verticalScroll(rememberScrollState()),

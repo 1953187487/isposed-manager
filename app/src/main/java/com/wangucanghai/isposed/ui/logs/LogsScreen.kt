@@ -20,8 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.util.Logger
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -44,18 +46,21 @@ fun LogsScreen(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("日志", style = MiuixTheme.textStyles.headline2)
+            Text(stringResource(R.string.logs_title), style = MiuixTheme.textStyles.headline2)
             IconButton(onClick = {
                 Logger.clear()
                 entries = Logger.entries()
             }) {
-                Icon(Icons.Filled.DeleteOutline, contentDescription = "清空")
+                Icon(
+                    Icons.Filled.DeleteOutline,
+                    contentDescription = stringResource(R.string.logs_clear),
+                )
             }
         }
         if (entries.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    "暂无日志",
+                    stringResource(R.string.logs_empty),
                     color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 )
             }

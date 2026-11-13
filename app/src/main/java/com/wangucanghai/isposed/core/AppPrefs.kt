@@ -88,6 +88,54 @@ class AppPrefs(context: Context) {
         get() = sp.getString("pending_changelog_notes", "") ?: ""
         set(v) = sp.edit().putString("pending_changelog_notes", v).apply()
 
+    // ---------- per-app authorization grants ----------
+    fun getAuthGrant(packageName: String): String? =
+        sp.getString("auth_grant:" + packageName, null)
+
+    fun setAuthGrant(packageName: String, encoded: String) =
+        sp.edit().putString("auth_grant:" + packageName, encoded).apply()
+
+    fun removeAuthGrant(packageName: String) =
+        sp.edit().remove("auth_grant:" + packageName).apply()
+
+    fun allAuthGrants(): Map<String, String> =
+        sp.all.entries
+            .filter { it.key.startsWith("auth_grant:") }
+            .associate { it.key.removePrefix("auth_grant:") to (it.value as String) }
+
+    // ---------- introduction / first-run ----------
+    /** 是否已看过产品介绍页。 */
+    var introSeen: Boolean
+        get() = sp.getBoolean("intro_seen", false)
+        set(v) = sp.edit().putBoolean("intro_seen", v).apply()
+
+    /** 上次启动时的 versionCode，用于检测「新版本安装后首次启动」。 */
+    var lastLaunchVersionCode: Int
+        get() = sp.getInt("last_launch_version_code", 0)
+        set(v) = sp.edit().putInt("last_launch_version_code", v).apply()
+
+    // ---------- pending external access request ----------
+    var pendingRequester: String
+        get() = sp.getString("pending_requester", "") ?: ""
+
+    set(v) = sp.edit().putString("pending_requester", v).apply()
+
+    var pendingRequestTitle: String
+        get() = sp.getString("pending_request_title", "") ?: ""
+
+    set(v) = sp.edit().putString("pending_request_title", v).apply()
+
+    var pendingRequestLevel: String
+        get() = sp.getString("pending_request_level", "READ") ?: "READ"
+
+    set(v) = sp.edit().putString("pending_request_level", v).apply()
+
+    fun clearPendingRequest() = sp.edit()
+        .putString("pending_requester", "")
+        .putString("pending_request_title", "")
+        .putString("pending_request_level", "READ")
+        .apply()
+
     // ---------- auto-converted adapters (install-time module conversion) ----------
     /** Adapter descriptor JSON for a module id that was auto-converted on install. */
     fun getAdapter(moduleId: String): String? =

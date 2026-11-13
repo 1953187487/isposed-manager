@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Isposed Manager</string>
+
+    <!-- common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="refresh">Refresh</string>
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="copy">Copy</string>
+    <string name="copy_log">Copy log</string>
+    <string name="search">Search</string>
+    <string name="beta">Beta</string>
+    <string name="not_configured">Base URL and API Key are not configured yet</string>
+
+    <!-- navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_modules">Modules</string>
+    <string name="nav_logs">Logs</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- home -->
+    <string name="home_title">Isposed Manager</string>
+    <string name="home_tagline">Rootless Xposed / LSPosed manager</string>
+    <string name="home_status_title">Run status</string>
+    <string name="home_status_active">Activated · rootless</string>
+    <string name="home_status_inactive">Not activated</string>
+    <string name="home_status_rootless">Wireless debugging (rootless)</string>
+    <string name="home_activate">Activate</string>
+    <string name="home_pair">Wireless pairing</string>
+    <string name="home_modules_count">Installed modules</string>
+    <string name="home_enabled_count">Enabled modules</string>
+    <string name="home_scope_count">Scopes</string>
+    <string name="home_stat_installed">Installed modules</string>
+    <string name="home_stat_enabled">Enabled modules</string>
+    <string name="home_stat_logs">Log entries</string>
+    <string name="home_stat_adb">ADB authorization</string>
+    <string name="home_stat_shell_state">Shell permission</string>
+    <string name="home_count_modules">%1$d</string>
+    <string name="home_count_logs">%1$d</string>
+    <string name="home_paired">Paired</string>
+    <string name="home_unpaired">Not paired</string>
+    <string name="home_available">Available</string>
+    <string name="home_unavailable">Unavailable</string>
+    <string name="home_active_desc">Activation is established, so modules and Shell commands are available.</string>
+    <string name="home_inactive_desc">Open the activation screen and obtain Shell permission through wireless debugging, TCP or a command. No root required.</string>
+    <string name="home_unlock_hint">Modules and logs unlock after activation.</string>
+
+    <!-- modules -->
+    <string name="modules_title">Modules</string>
+    <string name="modules_empty">No Xposed module found</string>
+    <string name="modules_loading">Loading…</string>
+    <string name="modules_search">Search modules</string>
+    <string name="modules_ai_dev">AI develop</string>
+    <string name="modules_ai_convert">AI convert</string>
+    <string name="modules_install">Install module</string>
+    <string name="modules_install_result">Install result</string>
+    <string name="modules_invalid">Invalid module package (module.prop missing)</string>
+    <string name="modules_install_failed">Install failed: %1$s</string>
+    <string name="modules_install_detail">Module: %1$s v%2$s\nAuthor: %3$s\n\n%4$s</string>
+    <string name="modules_prop_invalid">module.prop missing or invalid id</string>
+    <string name="modules_installed_converted">Module %1$s v%2$s installed and auto-converted, hot reboot required</string>
+    <string name="modules_installed">Module %1$s v%2$s installed, hot reboot required</string>
+    <string name="modules_install_failed_detail">Install failed: %1$s</string>
+    <string name="modules_reignite">Hot restart required (Re-ignite)</string>
+    <string name="modules_later">Later</string>
+    <string name="modules_scope_count">Scope (%1$d)</string>
+    <string name="modules_edit_scope">Edit scope</string>
+    <string name="modules_desc_empty">Description: none</string>
+    <string name="module_enabled">Enabled</string>
+    <string name="module_disabled">Disabled</string>
+    <string name="module_scope">Scope</string>
+    <string name="module_version">v%1$s</string>
+
+    <!-- logs -->
+    <string name="logs_title">Logs</string>
+    <string name="logs_empty">No log entries</string>
+    <string name="logs_clear">Clear</string>
+
+    <!-- settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_activation">Activation and debugging</string>
+    <string name="settings_activate">Activation</string>
+    <string name="settings_activate_sub">Wireless debugging / TCP / command, all rootless</string>
+    <string name="settings_shell">Shell terminal</string>
+    <string name="settings_shell_sub">Run commands directly on the device</string>
+    <string name="settings_section_ai">AI</string>
+    <string name="settings_ai_config">AI provider configuration</string>
+    <string name="settings_ai_config_sub">Base URL / API Key / model / temperature</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_language">Interface language</string>
+    <string name="settings_section_update">Updates</string>
+    <string name="settings_update">Check for updates</string>
+    <string name="settings_update_sub">Compare with the latest GitHub release</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_about">About this app</string>
+    <string name="settings_about_sub">Version, author and open source license</string>
+    <string name="settings_section_authorization">Authorization</string>
+    <string name="settings_authorization">App authorization</string>
+    <string name="settings_authorization_sub">Grant Shell capability per app and revoke it any time</string>
+    <string name="settings_intro">Product introduction</string>
+    <string name="settings_intro_sub">Show the introduction screen again</string>
+    <string name="settings_agreement">User agreement</string>
+    <string name="settings_agreement_sub">Terms of use and risk notice</string>
+    <string name="settings_oss_notice">Open source notice</string>
+    <string name="settings_oss_notice_sub">Upstream projects and licenses</string>
+    <string name="settings_credits">Credits</string>
+    <string name="settings_credits_sub">Acknowledge upstream projects and contributors</string>
+
+    <!-- language picker -->
+    <string name="language_title">Interface language</string>
+    <string name="language_system">Follow system</string>
+    <string name="language_system_desc">Use the current device language</string>
+    <string name="language_zh">简体中文</string>
+    <string name="language_zh_desc">中文界面</string>
+    <string name="language_en">English</string>
+    <string name="language_en_desc">English interface</string>
+    <string name="language_applied_hint">Takes effect immediately</string>
+
+    <!-- activation -->
+    <string name="activation_title">Activation</string>
+    <string name="activation_desc">Pick any of the three activation channels. No root required.</string>
+    <string name="activation_status">Current status</string>
+    <string name="activation_active">Activated</string>
+    <string name="activation_inactive">Not activated</string>
+    <string name="activation_auth_addr">Authorized endpoint: %1$s:%2$d</string>
+    <string name="activation_no_auth">No ADB authorization established yet</string>
+    <string name="activation_in_progress">Activating…</string>
+    <string name="activation_disconnect">Disconnect</string>
+    <string name="activation_disconnected">ADB connection disconnected</string>
+    <string name="activation_methods">Activation method</string>
+    <string name="activation_mode_wireless">Wireless</string>
+    <string name="activation_mode_tcp">TCP</string>
+    <string name="activation_mode_command">Command</string>
+    <string name="activation_services">Discovered services</string>
+    <string name="activation_pairing_services">Pairing services</string>
+    <string name="activation_connect_services">Connect services</string>
+    <string name="activation_log_title">Activation log</string>
+    <string name="activation_log_empty">No log entries</string>
+    <string name="activation_step_discover">Discovering devices…</string>
+    <string name="activation_step_discovering">Looking for wireless debugging services…</string>
+    <string name="activation_step_no_pairing">No pairing service found. Enable Developer options → Wireless debugging and join the same LAN, or use TCP or command activation.</string>
+    <string name="activation_step_pairing_found">Found pairing service %1$s:%2$d (%3$s)</string>
+    <string name="activation_step_need_code">Enter the 6-digit pairing code first</string>
+    <string name="activation_step_pairing">Pairing…</string>
+    <string name="activation_step_pairing_doing">Pairing…</string>
+    <string name="activation_step_pairing_failed">Pairing failed. Check the pairing code and make sure the pairing dialog appeared on the device</string>
+    <string name="activation_step_connecting">Connecting…</string>
+    <string name="activation_step_connecting_doing">Paired, connecting…</string>
+    <string name="activation_step_no_connect">No connect service found. Go back and pair again</string>
+    <string name="activation_step_connect_failed">Connection failed</string>
+    <string name="activation_step_tcp_mode">Switching to a fixed port…</string>
+    <string name="activation_step_shell_ok">Connected, shell permission granted</string>
+    <string name="activation_step_port_switched">ADB switched to fixed port %1$d, TCP activation works next time</string>
+    <string name="activation_step_verify">Verifying shell…</string>
+    <string name="activation_step_done">Activation complete</string>
+    <string name="activation_step_shell_failed">Connected but the shell check did not pass</string>
+    <string name="activation_step_wireless_exception">Wireless activation failed</string>
+    <string name="activation_step_scan_prepare">Preparing scan…</string>
+    <string name="activation_step_scan_start">Scanning the LAN for ADB devices…</string>
+    <string name="activation_step_scan_progress">Scanning %1$d%% (%2$d/%3$d)</string>
+    <string name="activation_step_scan_empty">No ADB device found on the LAN. Make sure ADB debugging is on and both devices share a network</string>
+    <string name="activation_step_scan_found">Found %1$d ADB devices on the LAN</string>
+    <string name="activation_step_scan_exception">LAN scan failed: %1$s</string>
+    <string name="activation_step_device_selected">Selected %1$s:%2$d%3$s</string>
+    <string name="activation_step_port_invalid">Invalid port. Enter a number between 1 and 65535</string>
+    <string name="activation_step_tcp_connecting">Connecting over TCP…</string>
+    <string name="activation_step_tcp_doing">Connecting to %1$s:%2$d …</string>
+    <string name="activation_step_tcp_ok">TCP activation succeeded, shell permission granted</string>
+    <string name="activation_step_tcp_failed">TCP connection failed. Make sure ADB debugging listens on that port and this device key is authorized (complete one wireless activation first).</string>
+    <string name="activation_step_tcp_exception">TCP connection failed</string>
+    <string name="activation_step_cmd_parse">Parsing command…</string>
+    <string name="activation_step_cmd_doing">Parsing command: %1$s</string>
+    <string name="activation_step_cmd_ok">Command activation succeeded, connected to %1$s:%2$d</string>
+    <string name="activation_step_cmd_failed">Command activation failed</string>
+    <string name="activation_step_cmd_exception">Command activation failed</string>
+    <string name="activation_cmd_target_invalid">Cannot parse the target, enter an address like 192.168.1.2:5555</string>
+    <string name="activation_cmd_connect_failed">Connecting to %1$s:%2$d failed, make sure ADB debugging is on and the key is authorized</string>
+    <string name="shell_not_authorized">The device has not authorized this ADB key, finish the activation first</string>
+
+    <!-- activation: wireless -->
+    <string name="activation_wireless_title">Wireless debugging activation</string>
+    <string name="activation_wireless_desc">Requires Android 11 or newer. Enable Developer options → Wireless debugging, then pick Pair device with pairing code and enter the 6-digit code below.</string>
+    <string name="activation_wireless_code">6-digit pairing code</string>
+    <string name="activation_wireless_port">Fixed TCP port (default 5555)</string>
+    <string name="activation_wireless_start">Start wireless activation</string>
+    <string name="activation_wireless_running">Activating…</string>
+
+    <!-- activation: tcp -->
+    <string name="activation_tcp_title">TCP activation</string>
+    <string name="activation_tcp_desc">Use this when the device runs plain ADB over TCP through "adb tcpip &lt;port&gt;". The app scans the real subnet of this machine, merges the wireless debugging services announced over mDNS, and also accepts a manual IP and port.</string>
+    <string name="activation_tcp_scan">Scan LAN devices</string>
+    <string name="activation_tcp_scanning">Scanning…</string>
+    <string name="activation_tcp_found">Found %1$d devices, tap one to fill the fields</string>
+    <string name="activation_tcp_host">Device IP / host name</string>
+    <string name="activation_tcp_port">Port (default 5555)</string>
+    <string name="activation_tcp_connect">Connect TCP device</string>
+    <string name="activation_tcp_connecting">Connecting…</string>
+    <string name="activation_tcp_badge_tls">TLS</string>
+    <string name="activation_tcp_badge_pending">Pending</string>
+    <string name="activation_tcp_badge_authorized">Authorized</string>
+    <string name="activation_tcp_no_network">No Wi-Fi or Ethernet connection detected. Join a LAN and try again.</string>
+    <string name="activation_tcp_log_title">Discovery steps</string>
+    <string name="activation_tcp_scan_networks">Scanning %1$d subnets, %2$d candidate addresses…</string>
+    <string name="activation_tcp_scan_mdns">Looking for wireless debugging services announced over mDNS…</string>
+    <string name="activation_tcp_scan_mdns_found">mDNS found %1$d wireless debugging services</string>
+    <string name="activation_tcp_scan_mdns_none">mDNS found no wireless debugging service</string>
+    <string name="activation_tcp_scan_done">Scan finished, %1$d devices found</string>
+    <string name="activation_tcp_log_mdns_none">mDNS found no wireless debugging service</string>
+    <string name="activation_tcp_log_mdns_found">mDNS found %1$d wireless debugging services</string>
+    <string name="activation_tcp_log_no_network">No Wi-Fi or Ethernet connection detected, connect to a LAN and retry</string>
+    <string name="activation_tcp_log_networks">Local networks: %1$s</string>
+    <string name="activation_tcp_log_candidates">Scanning %1$d networks, %2$d candidate addresses…</string>
+    <string name="activation_tcp_log_plain_done">Subnet sweep finished, %1$d plain ADB devices found</string>
+    <string name="activation_tcp_log_exception">LAN scan failed: %1$s</string>
+
+    <!-- activation: command -->
+    <string name="activation_command_title">Command activation</string>
+    <string name="activation_command_desc">Enter an ADB connection command such as adb connect 192.168.1.2:5555, or just 192.168.1.2:5555. The app parses the endpoint and completes TCP activation.</string>
+    <string name="activation_command_field">adb connect host:port</string>
+    <string name="activation_command_run">Run activation command</string>
+    <string name="activation_command_running">Running…</string>
+
+    <!-- shell -->
+    <string name="shell_title">Shell terminal</string>
+    <string name="shell_hint">Enter a command, for example getprop ro.product.model</string>
+    <string name="shell_run">Run</string>
+    <string name="shell_no_output">No output yet</string>
+
+    <!-- update -->
+    <string name="update_title">Check for updates</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_current">Current version</string>
+    <string name="update_latest">Latest version</string>
+    <string name="update_none">Already up to date</string>
+    <string name="update_found">Found version v%1$s</string>
+    <string name="update_no_notes">No release notes</string>
+    <string name="update_download_failed">Download failed, check the network</string>
+    <string name="update_install_unavailable">Cannot start the installer. Enable \"Install unknown apps\"</string>
+    <string name="update_install_started">Installer started, the changelog shows after the update</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_download_install">Download and install</string>
+    <string name="update_up_to_date">Already up to date (current v%1$s / latest %2$s)</string>
+    <string name="update_check_failed">Check failed (network or rate limit)</string>
+    <string name="update_prompt_title">Found version v%1$s</string>
+    <string name="update_prompt_desc">It contains new features and fixes, updating is recommended.</string>
+    <string name="update_now">Update now</string>
+    <string name="update_later">Later</string>
+    <string name="update_banner">Tap to view and update</string>
+    <string name="update_changelog_title">Changelog · v%1$s</string>
+    <string name="update_changelog_default">This update contains optimizations and bug fixes.</string>
+    <string name="update_changelog_ack">Got it</string>
+
+    <!-- AI -->
+    <string name="ai_config">AI provider configuration</string>
+    <string name="ai_base_url">Base URL</string>
+    <string name="ai_api_key">API Key</string>
+    <string name="ai_model">Model</string>
+    <string name="ai_temperature">Temperature: %1$s</string>
+    <string name="ai_pull_models">Fetch models</string>
+    <string name="ai_pulling">Fetching models…</string>
+    <string name="ai_pull_failed">No model fetched (check Base URL and Key)</string>
+    <string name="ai_model_required">Enter a model name</string>
+    <string name="ai_testing">Testing…</string>
+    <string name="ai_test_ok">Test succeeded: %1$s</string>
+    <string name="ai_test_failed">Test failed: %1$s</string>
+    <string name="ai_test_model">Test model</string>
+    <string name="ai_model_list">Model list:\n%1$s</string>
+    <string name="ai_notice">AI usage notice</string>
+    <string name="ai_convert_title">Module conversion</string>
+    <string name="ai_convert_hint">Pick an Isposed module and convert it into a package this app can install</string>
+    <string name="ai_convert_pick">Pick module</string>
+    <string name="ai_convert_none_selected">No module selected</string>
+    <string name="ai_convert_no_modules">No convertible module found</string>
+    <string name="ai_convert_pick_first">Pick a module first</string>
+    <string name="ai_convert_need_api">Configure the AI provider API first</string>
+    <string name="ai_convert_running">Analyzing and converting…</string>
+    <string name="ai_convert_failed">Cannot analyze this module</string>
+    <string name="ai_convert_start">Analyze and convert</string>
+    <string name="ai_convert_result">Module analysis finished:\nEntry points: %1$s\n\nAdapter descriptor:\n%2$s</string>
+    <string name="ai_dev_title">AI direct development</string>
+    <string name="ai_dev_hint">Describe the module you want, for example hide status bar icons or move the volume slider</string>
+    <string name="ai_dev_need_desc">Describe the module you want</string>
+    <string name="ai_dev_need_api">Configure the AI provider API first</string>
+    <string name="ai_dev_running">Generating with AI… (this can take a while)</string>
+    <string name="ai_dev_generate">Generate module</string>
+    <string name="ai_dev_result">Generated successfully, %1$d files:\n%2$s</string>
+    <string name="ai_dev_invalid_structure">AI returned no valid file structure: %1$s</string>
+    <string name="ai_dev_files_count">Generated %1$d files</string>
+    <string name="ai_dev_failed">Generation failed: %1$s</string>
+
+    <!-- scope -->
+    <string name="scope_title">Module scope</string>
+    <string name="scope_title_fmt">Scope · %1$s</string>
+    <string name="scope_loading">Loading…</string>
+    <string name="scope_saved">Scope saved</string>
+    <string name="scope_android">System framework</string>
+
+    <!-- intro -->
+    <string name="intro_title">Isposed Manager</string>
+    <string name="intro_tagline">Rootless Xposed / LSPosed manager</string>
+    <string name="intro_desc">Built on the LSPosed framework. Once activated you can manage modules, configure scopes and run Shell commands on the device.</string>
+    <string name="intro_feature_1_title">Rootless activation</string>
+    <string name="intro_feature_1_desc">Wireless pairing, plain TCP and command parsing share one persistent ADB identity.</string>
+    <string name="intro_feature_2_title">Modules and scopes</string>
+    <string name="intro_feature_2_desc">Module discovery, toggling and per app scope management are reimplemented on top of the LSPosed daemon interface.</string>
+    <string name="intro_feature_3_title">Shell and AI</string>
+    <string name="intro_feature_3_desc">The built-in terminal runs commands on the device, and any Xposed module source can be converted into an installable project.</string>
+    <string name="intro_cta">Get started</string>
+    <string name="intro_loading_title">Downloading data from the server</string>
+    <string name="intro_loading_desc">Fetching the latest release information and changelog, please wait…</string>
+    <string name="intro_loading_done">Data is ready</string>
+
+    <!-- onboarding -->
+    <string name="onboarding_title">Welcome to Isposed Manager</string>
+    <string name="onboarding_desc">Finish %1$d steps to start using the app</string>
+    <string name="onboarding_prev">Previous</string>
+    <string name="onboarding_agree_continue">Agree and continue</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_finish">Finish and start</string>
+    <string name="onboarding_footer">Author: 万古沧海 (same name on Bilibili)</string>
+    <string name="onboarding_agree_label">I have read and accept \"%1$s\"</string>
+    <string name="onboarding_consent_title">Reading confirmation</string>
+    <string name="onboarding_consent_desc">Checking the box records that you read the content, and it does not block the next step.</string>
+    <string name="onboarding_language_title">Choose the interface language</string>
+    <string name="onboarding_language_desc">The language can be changed any time in settings.</string>
+
+    <!-- notices -->
+    <string name="notice_agreement_title">User agreement</string>
+    <string name="notice_ai_title">AI usage notice</string>
+    <string name="notice_oss_title">Open source notice</string>
+    <string name="notice_ack">I have read and accept</string>
+    <string name="notice_disagree_exit">Decline and exit</string>
+    <string name="notice_agreement_body">[Isposed Manager User Agreement]\n\nThanks for using Isposed Manager. Read and accept the terms below before you continue.\n\n1. Nature of the software\n1. Isposed Manager is an open source rootless Android manager built on LSPosed (GPL-3.0) and AxManager (Apache-2.0).\n2. It gains system management capability through wireless debugging (rootless) or root access.\n\n2. Usage risks\n1. Changing system parameters, freezing apps and installing modules may affect device stability. You bear the risk.\n2. Back up your data before any operation. The author is not responsible for losses caused by this software.\n3. Some customized ROMs may be incompatible. Use it with care.\n\n3. Compliant use\n1. Do not use this software for illegal, improper or rights-infringing purposes.\n2. Follow local laws and the device vendor terms of service.\n\n4. Open source license\n1. This software is released under GPL-3.0, derived from LSPosed (GPL-3.0) and AxManager (Apache-2.0).\n2. See Settings > About > Third party open source statement for details.\n\n5. AI features\n1. Read the AI usage notice before using any AI feature.\n\n6. Disclaimer and updates\n1. This software updates from time to time. Updates are announced inside the app.\n2. Stop using and uninstall the app if you do not accept this agreement.\n\n— 万古沧海</string>
+    <string name="notice_ai_body">[AI Usage Notice]\n\nThis software offers AI features (AI provider setup, module conversion, direct AI development). Read this before you continue:\n\n1. Data transmission\n1. AI features send your prompt and the module metadata you selected to the AI provider you configured.\n2. Keep private data, passwords and keys out of your prompts.\n3. The author never collects, stores or uploads your prompt content.\n\n2. Custom API\n1. AI features require a provider API compatible with OpenAI (base URL, API key and model).\n2. Your API key stays on this device and is never uploaded to a third party.\n\n3. Generated results\n1. Generated module code may contain defects. Review it before use.\n2. You bear the risk of the generated module and its behavior.\n\n4. Responsibility\n1. The author gives no warranty about the accuracy or safety of generated content.\n2. Using AI features means you have read and accepted this notice.\n\n— 万古沧海</string>
+    <string name="notice_oss_body">[Open Source Statement]\n\nIsposed Manager is open source software released under GPL-3.0. The following projects were referenced during development, and this app declares and thanks them:\n\n1. LSPosed\n· Project: https://github.com/LSPosed/LSPosed\n· License: GPL-3.0\n· Used for: module management contracts (xposedmodule metadata), module enable and scope logic, LSPosed daemon communication bridge.\n· Basis: as a GPL-3.0 derivative, this app is released under GPL-3.0 and preserves the original copyright and license notices.\n\n2. AxManager (Axeron Manager)\n· Project: https://github.com/fahrez182/AxManager\n· License: Apache-2.0\n· Used for: rootless activation (mDNS discovery, TLS pairing and connection, TCP mode switching), the shell executor, plugin installation (module.prop + customize.sh) and Re-ignite restart.\n· Basis: Apache-2.0 permits derivative use, so this app preserves its copyright, license and credits (see THIRD_PARTY_NOTICES.md).\n\n3. This software\n· Author: 万古沧海 (GitHub: https://github.com/1953187487)\n· Copyright: Copyright (C) 2026 万古沧海\n· License: GPL-3.0 (see the LICENSE file)\n\nThe full upstream license texts are available in About > Third party open source statement.</string>
+
+    <!-- language -->
+    <string name="lang_title">Interface language</string>
+    <string name="lang_system">Follow system</string>
+    <string name="lang_system_desc">Use the current device language</string>
+    <string name="lang_zh">简体中文</string>
+    <string name="lang_zh_desc">Chinese interface</string>
+    <string name="lang_en">English</string>
+    <string name="lang_en_desc">English interface</string>
+    <string name="lang_applied_now">Takes effect immediately</string>
+
+    <!-- authorization -->
+    <string name="auth_title">App authorization</string>
+    <string name="auth_desc">Grant Shell and debugging capability per app. Records stay on this device and can be revoked any time.</string>
+    <string name="auth_summary">%1$d apps authorized</string>
+    <string name="auth_granted_count">Authorized apps</string>
+    <string name="auth_grant">Authorize</string>
+    <string name="auth_revoke">Revoke</string>
+    <string name="auth_revoke_all">Revoke all</string>
+    <string name="auth_state_granted">Authorized</string>
+    <string name="auth_state_revoked">Not authorized</string>
+    <string name="auth_level_read">Read only</string>
+    <string name="auth_level_full">Full</string>
+    <string name="auth_level_title">Permission level</string>
+    <string name="auth_search_hint">Search by app name or package</string>
+    <string name="auth_empty">No app found</string>
+    <string name="auth_request_title">App access request</string>
+    <string name="auth_request_message">%1$s requests the Shell capability of this app. Authorize it?</string>
+    <string name="auth_request_allow">Allow</string>
+    <string name="auth_request_deny">Deny</string>
+    <string name="auth_request_invalid">Invalid request source</string>
+    <string name="auth_manage">Manage grants</string>
+
+    <!-- about -->
+    <string name="about_title">About this app</string>
+    <string name="about_tagline">Built on the LSPosed framework, every module feature rewritten</string>
+    <string name="about_section_info">App information</string>
+    <string name="about_version_name">Version name</string>
+    <string name="about_version_code">Version code</string>
+    <string name="about_package_name">Package name</string>
+    <string name="about_signature_title">Signing certificate</string>
+    <string name="about_signature_desc">SHA-256 fingerprint</string>
+    <string name="about_section_framework">Foundation framework</string>
+    <string name="about_framework_title">LSPosed Framework</string>
+    <string name="about_framework_sub">GPL-3.0 · Android 8.1 ~ 14</string>
+    <string name="about_framework_desc">This app is developed on top of LSPosed Framework, which provides the runtime and injection foundation. LSPosed is a Riru / Zygisk module built on LSPlant and exposes the same ART hook interface as the original Xposed.</string>
+    <string name="about_framework_desc2">Module detection, scopes and daemon interfaces come from the stable LSPosed interfaces. All management capabilities are reimplemented on top of them, following the upstream GPL-3.0 terms and keeping the copyright notices.</string>
+    <string name="about_section_features">Rewritten module features</string>
+    <string name="about_feature_1_title">Module detection and management</string>
+    <string name="about_feature_1_desc">Module discovery, toggling and status management reimplemented on the LSPosed daemon interface</string>
+    <string name="about_feature_2_title">Scope configuration</string>
+    <string name="about_feature_2_desc">Per app scope selection and persistence, rewritten as local data driven</string>
+    <string name="about_feature_3_title">Three activation channels</string>
+    <string name="about_feature_3_desc">Wireless pairing, plain TCP and command parsing share one persistent ADB identity</string>
+    <string name="about_feature_4_title">Shell and debugging</string>
+    <string name="about_feature_4_desc">The built-in terminal runs commands on the device, and module push, install and scope delivery use the same local channel</string>
+    <string name="about_feature_5_title">AI conversion</string>
+    <string name="about_feature_5_desc">Turn existing Xposed module source into an installable project with one tap</string>
+    <string name="about_feature_6_title">AI development</string>
+    <string name="about_feature_6_desc">Let AI generate a complete LSPosed module project</string>
+    <string name="about_feature_7_title">Updates and onboarding</string>
+    <string name="about_feature_7_desc">Checks for a new version on entry, then shows the changelog and walks through the agreement again after an update</string>
+    <string name="about_feature_8_title">App authorization</string>
+    <string name="about_feature_8_desc">Grant Shell capability per app, accept external access requests and revoke at any time</string>
+    <string name="about_section_author">Author</string>
+    <string name="about_author_name">万古沧海</string>
+    <string name="about_author_bilibili">Bilibili · same name account</string>
+    <string name="about_author_github">GitHub · 1953187487</string>
+    <string name="about_section_license">Open source statement</string>
+    <string name="about_license_expand">View the open source license and copyright statement</string>
+    <string name="about_license_text">This app is released under the GPL-3.0 license.\n\nFoundation framework LSPosed (GPL-3.0)\nLSPosed Framework is maintained by the LSPosed Contributors.\nThis app is developed on top of LSPosed and rewrites the whole module management layer.\nUpstream copyright notices and the GPL-3.0 license text are preserved.\n\nOriginal authors and upstream projects:\nLSPosed (GPL-3.0) - foundation hook framework\nAxManager / Axeron (Apache-2.0) - reference for wireless activation, shell and plugin install\n\nThe open source terms of the projects above are followed and their copyright notices are preserved.</string>
+
+    <!-- credits -->
+    <string name="credits_title">Credits</string>
+    <string name="credits_desc">This app stands on the shoulders of many open source projects. Thanks to every author and contributor.</string>
+    <string name="credits_upstream_title">Upstream projects</string>
+    <string name="credits_upstream_desc">The following projects provide the foundation and implementation reference.</string>
+    <string name="credits_design_title">Design and implementation</string>
+    <string name="credits_design_desc">Interface framework and experience design</string>
+    <string name="credits_contributors_title">Code contributions</string>
+    <string name="credits_contributors_desc">Developers who shipped fixes and features</string>
+    <string name="credits_testers_title">Testing and feedback</string>
+    <string name="credits_testers_desc">Friends who joined the beta and reported issues</string>
+    <string name="credits_author_title">Author</string>
+    <string name="credits_author_desc">The author and maintainer of this project</string>
+    <string name="credits_repo">Repository: https://github.com/1953187487/isposed-manager</string>
+    <string name="credits_license_fmt">License: %1$s</string>
+    <string name="credits_role_lsposed">Foundation hook framework, module contract and daemon communication</string>
+    <string name="credits_role_axmanager">Reference for the rootless activation flow, shell executor and plugin installation</string>
+    <string name="credits_role_miuix">Compose design system, Miuix components and theme tokens</string>
+    <string name="credits_role_compose">Jetpack Compose declarative UI foundation</string>
+    <string name="credits_entry_axmanager">AxManager</string>
+    <string name="credits_entry_miuix">Miuix</string>
+    <string name="credits_entry_compose">Jetpack Compose</string>
+    <string name="credits_entry_project">The author of this app</string>
+    <string name="credits_entry_project_role">Design, implementation and maintenance of every feature</string>
+    <string name="credits_thanks_line">Thanks to everyone who raised a suggestion in issues, mailing lists and the community.</string>
+
+    <!-- legacy layout resources -->
+    <string name="home_stat_ai">AI module development</string>
+    <string name="home_stat_convert">AI convert module</string>
+    <string name="home_stat_shell">Shell terminal</string>
+    <string name="home_stat_update">Check update</string>
+    <string name="settings_section_main">General</string>
+    <string name="settings_ai_notice">AI usage notice</string>
+    <string name="settings_user_agreement">User agreement</string>
+    <string name="settings_author_value">万古沧海 · Bilibili same name</string>
+    <string name="ai_save">Save</string>
+    <string name="scope_save">Save</string>
+    <string name="about_dev_author">Developer</string>
+    <string name="about_upstream">Upstream projects</string>
+    <string name="about_license">License</string>
+    <string name="about_third_party">Third party notices</string>
+    <string name="about_open_agreement">Derivative license note</string>
+    <string name="about_desc">A rootless manager built on LSPosed and AxManager, following both projects\' derivative license terms.</string>
+    <string name="update_download">Go to download</string>
+</resources>

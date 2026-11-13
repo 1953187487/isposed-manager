@@ -25,9 +25,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wangucanghai.isposed.R
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
@@ -147,7 +149,7 @@ fun BetaBadge() {
         color = MiuixTheme.colorScheme.primaryContainer,
     ) {
         Text(
-            text = "测试版",
+            text = stringResource(R.string.beta),
             color = MiuixTheme.colorScheme.onPrimaryContainer,
             fontSize = 10.sp,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -186,7 +188,10 @@ fun ScaffoldPage(
                 title = title,
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                        )
                     }
                 },
             )

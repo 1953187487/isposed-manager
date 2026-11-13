@@ -22,9 +22,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.ai.AiClient
 import com.wangucanghai.isposed.ai.ModuleCodeGen
 import com.wangucanghai.isposed.ui.components.ScaffoldPage
@@ -53,7 +55,7 @@ class DevActivity : BaseActivity() {
         enableEdgeToEdge()
         setContent {
             IsposedTheme {
-                ScaffoldPage(title = "AI 直接开发", onBack = { finish() }) {
+                ScaffoldPage(title = stringResource(R.string.ai_dev_title), onBack = { finish() }) {
                     DevContent()
                 }
             }
@@ -74,7 +76,7 @@ private fun DevContent() {
         value = prompt,
         onValueChange = { prompt = it },
         modifier = Modifier.fillMaxWidth(),
-        label = "描述要生成的模块功能，例如：隐藏状态栏图标、修改音量条位置…",
+        label = stringResource(R.string.ai_dev_hint),
         useLabelAsPlaceholder = true,
         minLines = 3,
         cornerRadius = 14.dp,
@@ -83,20 +85,23 @@ private fun DevContent() {
     Button(
         onClick = {
             val text = prompt.text.trim()
-            if (text.isEmpty()) { Toast.makeText(context, "请输入模块功能描述", Toast.LENGTH_SHORT).show(); return@Button }
+            if (text.isEmpty()) {
+                Toast.makeText(context, context.getString(R.string.ai_dev_need_desc), Toast.LENGTH_SHORT).show()
+                return@Button
+            }
             if (!client.isConfigured()) {
-                Toast.makeText(context, "请先配置 AI 服务商 API", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.ai_dev_need_api), Toast.LENGTH_LONG).show()
                 context.startActivity(Intent(context, AiConfigActivity::class.java))
                 return@Button
             }
-            result = "AI 生成中…（可能需要几十秒）"
+            result = context.getString(R.string.ai_dev_running)
             busy = true
             scope.launch {
                 val gen = ModuleCodeGen(context)
                 val r = withContext(Dispatchers.IO) { gen.generate(text) }
                 result = if (r.ok) {
                     val files = r.files.keys.joinToString("\n")
-                    "生成成功，共 ${r.files.size} 个文件：\n$files\n\n" +
+                    context.getString(R.string.ai_dev_result, r.files.size, files) + "\n\n" +
                         r.files.entries.joinToString("\n\n") { (k, v) -> "===== $k =====\n$v" }
                 } else {
                     r.message
@@ -110,7 +115,7 @@ private fun DevContent() {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Icon(Icons.Filled.AutoAwesome, contentDescription = null)
-        Text("生成模块")
+        Text(stringResource(R.string.ai_dev_generate))
     }
     SpacerH(16)
     if (result.isNotEmpty()) {

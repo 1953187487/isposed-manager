@@ -1,10 +1,23 @@
 package com.wangucanghai.isposed.adb
 
 import android.content.Context
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+/**
+ * One step of the discovery log.
+ *
+ * The message is kept as a resource id so the UI can render it in the active
+ * language instead of a hard coded string.
+ */
+data class DiscoveryEvent(
+    val messageRes: Int,
+    val args: List<Any> = emptyList(),
+    val isError: Boolean = false,
+)
 
 /**
  * AxManager-style activation orchestration.
@@ -68,7 +81,84 @@ class ActivationManager(private val context: Context) {
         }
     }
 
-    /** Connect to the device's connect endpoint and keep the channel for shell use. */
+    /**
+     * Scan the local network for reachable ADB devices, merging the plain
+     * subnet sweep with the wireless debugging services announced over mDNS.
+     *
+     * Every failure is contained here: the caller receives an empty list and a
+     * log line instead of an exception that would tear down the UI scope.
+     *
+     * @param onLog called with each human readable step of the discovery
+     * @param onProgress receives (done, total) probe counts
+     */
+    suspend fun discoverDevices(
+        onLog: suspend (DiscoveryEvent) -> Unit = {},
+        onProgress: suspend (done: Int, total: Int) -> Unit = { _, _ -> },
+    ): List<DiscoveredDevice> = withContext(Dispatchers.IO) {
+        try {
+            val networks = NetworkDiscovery.activeLocalNetworks(context)
+            if (networks.isEmpty()) {
+                onLog(DiscoveryEvent(R.string.activation_tcp_log_no_network, isError = true))
+                return@withContext emptyList()
+            }
+            onLog(
+                DiscoveryEvent(
+                    R.string.activation_tcp_log_networks,
+                    listOf(NetworkDiscovery.describe(networks)),
+                ),
+            )
+
+            val hosts = NetworkDiscovery.candidateHosts(networks)
+            onLog(
+                DiscoveryEvent(
+                    R.string.activation_tcp_log_candidates,
+                    listOf(networks.size, hosts.size),
+                ),
+            )
+
+            val plain = LanScanner(keys.key()).scan(networks, onProgress)
+            onLog(
+                DiscoveryEvent(
+                    R.string.activation_tcp_log_plain_done,
+                    listOf(plain.size),
+                ),
+            )
+
+            val tls = runCatching { resolver.discover(MdnsResolver.TYPE_CONNECT, 4000) }
+                .getOrElse { emptyList() }
+            onLog(
+                if (tls.isEmpty()) {
+                    DiscoveryEvent(R.string.activation_tcp_log_mdns_none)
+                } else {
+                    DiscoveryEvent(R.string.activation_tcp_log_mdns_found, listOf(tls.size))
+                },
+            )
+
+            buildList {
+                plain.forEach { add(DiscoveredDevice(it.host, it.port, it.model, tls = false, authorized = it.authorized)) }
+                tls.forEach { s ->
+                    add(DiscoveredDevice(s.host, s.port, null, tls = true, authorized = true, service = s))
+                }
+            }.distinctBy { "${it.host}:${it.port}" }.sortedBy { it.host }
+        } catch (t: Throwable) {
+            Logger.e("discoverDevices failed: ${t.message}")
+            onLog(
+                DiscoveryEvent(
+                    R.string.activation_tcp_log_exception,
+                    listOf(t.message ?: "unknown"),
+                    isError = true,
+                ),
+            )
+            emptyList()
+        }
+    }
+
+    /** Connect to a discovered device, choosing the TLS or plain channel. */
+    fun connectDevice(device: DiscoveredDevice): Boolean =
+        if (device.tls && device.service != null) connect(device.service)
+        else connectTcp(device.host, device.port)
+
+    /** Connect to a known TLS connect service directly (no pairing). */
     fun connect(service: MdnsResolver.AdbService): Boolean {
         closeClient()
         val c = AdbTlsClient(service.host, service.port, keys)
@@ -99,24 +189,6 @@ class ActivationManager(private val context: Context) {
             Logger.e("connect failed: ${t.message}")
             c.close()
             false
-        }
-    }
-
-    /**
-     * Scan the local network for plain-ADB-over-TCP devices so the user can
-     * pick one instead of typing its IP manually.
-     *
-     * Any failure is contained here: the caller receives an empty list and an
-     * error log instead of an exception that would tear down the UI scope.
-     */
-    suspend fun scanLanDevices(
-        onProgress: suspend (done: Int, total: Int) -> Unit = { _, _ -> },
-    ): List<LanScanner.FoundDevice> = withContext(Dispatchers.IO) {
-        try {
-            LanScanner(keys.key()).scan(onProgress)
-        } catch (t: Throwable) {
-            Logger.e("scanLanDevices failed: ${t.message}")
-            emptyList()
         }
     }
 
@@ -168,13 +240,19 @@ class ActivationManager(private val context: Context) {
      */
     fun activateByCommand(command: String): Result<Pair<String, Int>> {
         val target = parseAdbTarget(command)
-            ?: return Result.failure(IllegalArgumentException("无法解析目标地址，请输入形如 192.168.1.2:5555 的地址"))
+            ?: return Result.failure(
+                IllegalArgumentException(context.getString(R.string.activation_cmd_target_invalid)),
+            )
         val host = target.first
         val port = target.second
         return if (connectTcp(host, port)) {
             Result.success(target)
         } else {
-            Result.failure(IllegalStateException("连接 $host:$port 失败，请确认设备已开启 ADB 调试并已授权本机密钥"))
+            Result.failure(
+                IllegalStateException(
+                    context.getString(R.string.activation_cmd_connect_failed, host, port),
+                ),
+            )
         }
     }
 

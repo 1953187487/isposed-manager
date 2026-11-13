@@ -38,11 +38,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.adb.ShellExecutor
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.data.ModuleInfo
@@ -105,20 +107,28 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                 val installer = ModuleInstaller(context, ShellExecutor(context, prefs), prefs)
                 val prop = withContext(Dispatchers.IO) { installer.parseModuleProp(zipPath) }
                 if (prop == null) {
-                    Toast.makeText(context, "无效的模块包（缺少 module.prop）", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.modules_invalid),
+                        Toast.LENGTH_LONG,
+                    ).show()
                     return@launch
                 }
                 val result = withContext(Dispatchers.IO) { installer.install(zipPath) }
                 android.app.AlertDialog.Builder(context)
-                    .setTitle("安装结果")
+                    .setTitle(context.getString(R.string.modules_install_result))
                     .setMessage(
-                        "模块：${prop.name} v${prop.version}\n作者：${prop.author}\n\n${result.message}"
+                        context.getString(R.string.modules_install_detail, prop.name, prop.version, prop.author, result.message),
                     )
-                    .setPositiveButton("好") { _, _ -> }
+                    .setPositiveButton(context.getString(R.string.ok)) { _, _ -> }
                     .show()
                 Logger.i("Module install: ${result.message}")
             } catch (t: Throwable) {
-                Toast.makeText(context, "安装失败：${t.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.modules_install_failed, t.message ?: ""),
+                    Toast.LENGTH_LONG,
+                ).show()
             }
         }
     }
@@ -136,7 +146,7 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     SpacerH(4)
-                    Text("安装模块", style = MiuixTheme.textStyles.button)
+                    Text(stringResource(R.string.modules_install), style = MiuixTheme.textStyles.button)
                 }
             }
         },
@@ -145,7 +155,7 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 androidx.compose.foundation.layout.Spacer(Modifier.size(16.dp))
                 Text(
-                    text = "模块",
+                    text = stringResource(R.string.modules_title),
                     style = MiuixTheme.textStyles.headline2,
                     color = MiuixTheme.colorScheme.onBackground,
                 )
@@ -153,7 +163,7 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                 TextField(
                     state = queryState,
                     modifier = Modifier.fillMaxWidth(),
-                    label = "搜索模块",
+                    label = stringResource(R.string.modules_search),
                     useLabelAsPlaceholder = true,
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     cornerRadius = 16.dp,
@@ -162,12 +172,12 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ChipPill(
                         icon = Icons.Filled.AutoAwesome,
-                        label = "AI 转换",
+                        label = stringResource(R.string.modules_ai_convert),
                         onClick = { context.startActivity(Intent(context, ConvertActivity::class.java)) },
                     )
                     ChipPill(
                         icon = Icons.Outlined.Code,
-                        label = "AI 开发",
+                        label = stringResource(R.string.modules_ai_dev),
                         onClick = { context.startActivity(Intent(context, DevActivity::class.java)) },
                     )
                 }
@@ -180,7 +190,8 @@ fun ModulesScreen(modifier: Modifier = Modifier) {
             if (filtered.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = if (loading) "加载中…" else "未发现 Xposed 模块",
+                        text = if (loading) stringResource(R.string.modules_loading)
+                        else stringResource(R.string.modules_empty),
                         color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     )
                 }
@@ -272,12 +283,12 @@ private fun ModuleCard(
                 Button(onClick = onScope, cornerRadius = 12.dp, minHeight = 36.dp) {
                     Icon(Icons.Outlined.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
                     androidx.compose.foundation.layout.Spacer(Modifier.size(4.dp))
-                    Text("作用域 (${module.scope.size})")
+                    Text(stringResource(R.string.modules_scope_count, module.scope.size))
                 }
                 Button(onClick = onConvert, cornerRadius = 12.dp, minHeight = 36.dp) {
                     Icon(Icons.Filled.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
                     androidx.compose.foundation.layout.Spacer(Modifier.size(4.dp))
-                    Text("AI 转换")
+                    Text(stringResource(R.string.modules_ai_convert))
                 }
             }
         }

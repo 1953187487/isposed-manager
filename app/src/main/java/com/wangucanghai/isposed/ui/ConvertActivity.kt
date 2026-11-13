@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.animateContentSize
@@ -31,6 +32,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.ai.AiClient
 import com.wangucanghai.isposed.ai.ModuleConverter
 import com.wangucanghai.isposed.core.AppPrefs
@@ -61,7 +63,7 @@ class ConvertActivity : BaseActivity() {
         enableEdgeToEdge()
         setContent {
             IsposedTheme {
-                ScaffoldPage(title = "模块转换", onBack = { finish() }) {
+                ScaffoldPage(title = stringResource(R.string.ai_convert_title), onBack = { finish() }) {
                     ConvertContent()
                 }
             }
@@ -102,7 +104,7 @@ private fun ConvertContent() {
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                picked?.label ?: "未选择模块",
+                picked?.label ?: stringResource(R.string.ai_convert_none_selected),
                 style = MiuixTheme.textStyles.body1,
                 color = if (picked != null) {
                     MiuixTheme.colorScheme.onSecondaryContainer
@@ -119,7 +121,7 @@ private fun ConvertContent() {
     }
     OverlayDialog(
         show = expanded,
-        title = "选择模块",
+        title = stringResource(R.string.ai_convert_pick),
         onDismissRequest = { expanded = false },
     ) {
         Column(
@@ -127,7 +129,7 @@ private fun ConvertContent() {
         ) {
             if (modules.isEmpty()) {
                 Text(
-                    "未发现可转换的模块",
+                    stringResource(R.string.ai_convert_no_modules),
                     style = MiuixTheme.textStyles.footnote1,
                     color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 )
@@ -169,23 +171,26 @@ private fun ConvertContent() {
     Button(
         onClick = {
             val pkg = picked?.pkg
-            if (pkg == null) { Toast.makeText(context, "请先选择模块", Toast.LENGTH_SHORT).show(); return@Button }
+            if (pkg == null) {
+                Toast.makeText(context, context.getString(R.string.ai_convert_pick_first), Toast.LENGTH_SHORT).show()
+                return@Button
+            }
             if (!client.isConfigured()) {
-                Toast.makeText(context, "请先配置 AI 服务商 API", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.ai_convert_need_api), Toast.LENGTH_LONG).show()
                 context.startActivity(Intent(context, AiConfigActivity::class.java))
                 return@Button
             }
-            result = "分析并转换中…"
+            result = context.getString(R.string.ai_convert_running)
             busy = true
             scope.launch {
                 val conv = ModuleConverter(context)
                 val desc = withContext(Dispatchers.IO) { conv.analyze(pkg) }
                 result = if (desc == null) {
-                    "无法分析该模块"
+                    context.getString(R.string.ai_convert_failed)
                 } else {
                     val adapterJson = withContext(Dispatchers.IO) { conv.toAdapter(desc) }
                     Logger.i("Converted ${desc.packageName}")
-                    "模块分析完成：\n入口：${desc.entryPoints}\n\n适配器描述：\n$adapterJson"
+                    context.getString(R.string.ai_convert_result, desc.entryPoints, adapterJson)
                 }
                 busy = false
             }
@@ -195,7 +200,7 @@ private fun ConvertContent() {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Icon(Icons.Filled.Transform, contentDescription = null)
-        Text("分析并转换")
+        Text(stringResource(R.string.ai_convert_start))
     }
     SpacerH(16)
     if (result.isNotEmpty()) {

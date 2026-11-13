@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.ui.activation.ActivationScreen
 import com.wangucanghai.isposed.ui.theme.IsposedTheme
 import top.yukonga.miuix.kmp.basic.Icon
@@ -34,10 +36,13 @@ class ActivationActivity : BaseActivity() {
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
                         TopAppBar(
-                            title = "激活",
+                            title = stringResource(R.string.activation_title),
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = stringResource(R.string.back),
+                                    )
                                 }
                             },
                         )

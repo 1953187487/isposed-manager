@@ -18,7 +18,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.ui.components.ScaffoldPage
 import com.wangucanghai.isposed.ui.components.SectionCard
@@ -48,7 +50,7 @@ class UpdateActivity : BaseActivity() {
         enableEdgeToEdge()
         setContent {
             IsposedTheme {
-                ScaffoldPage(title = "检查更新", onBack = { finish() }) {
+                ScaffoldPage(title = stringResource(R.string.update_title), onBack = { finish() }) {
                     UpdateContent()
                 }
             }
@@ -57,8 +59,8 @@ class UpdateActivity : BaseActivity() {
 }
 
 private fun versionName(context: android.content.Context): String = try {
-    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.7"
-} catch (_: Exception) { "1.0.7" }
+    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.8"
+} catch (_: Exception) { "1.0.8" }
 
 @Composable
 private fun UpdateContent() {
@@ -81,26 +83,26 @@ private fun UpdateContent() {
 
     val currentVersion = versionName(context)
     SectionCard {
-        Text("当前版本", style = MiuixTheme.textStyles.title3)
+        Text(stringResource(R.string.update_current), style = MiuixTheme.textStyles.title3)
         SpacerH(6)
         Text("v$currentVersion", style = MiuixTheme.textStyles.headline2)
     }
     SpacerH(16)
     SectionCard {
-        Text("最新版本", style = MiuixTheme.textStyles.title3)
+        Text(stringResource(R.string.update_latest), style = MiuixTheme.textStyles.title3)
         SpacerH(6)
         when {
-            checking -> Text("检查中…", style = MiuixTheme.textStyles.body2)
-            info == null -> Text("检查失败（网络或限流）", style = MiuixTheme.textStyles.body2)
+            checking -> Text(stringResource(R.string.update_checking), style = MiuixTheme.textStyles.body2)
+            info == null -> Text(stringResource(R.string.update_check_failed), style = MiuixTheme.textStyles.body2)
             info!!.hasUpdate -> {
                 Text(
-                    "发现新版本 v${info!!.latestVersion}",
+                    stringResource(R.string.update_found, info!!.latestVersion),
                     style = MiuixTheme.textStyles.body1,
                     color = MiuixTheme.colorScheme.primary,
                 )
                 SpacerH(8)
                 Text(
-                    info!!.notes.ifBlank { "无更新说明" },
+                    info!!.notes.ifBlank { stringResource(R.string.update_no_notes) },
                     style = MiuixTheme.textStyles.footnote1,
                     color = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                     modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -114,19 +116,31 @@ private fun UpdateContent() {
                             val apk = withContext(Dispatchers.IO) { installer.download(info!!.downloadUrl) }
                             if (apk == null) {
                                 downloading = false
-                                Toast.makeText(context, "下载失败，请检查网络", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.update_download_failed),
+                                    Toast.LENGTH_LONG,
+                                ).show()
                                 return@launch
                             }
                             val ok = withContext(Dispatchers.Main) { installer.install(apk) }
                             downloading = false
                             if (!ok) {
-                                Toast.makeText(context, "无法调起安装，请开启「允许安装未知应用」", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.update_install_unavailable),
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             } else {
                                 // The announcement is shown on the next launch, right
                                 // before the agreement onboarding flow.
                                 prefs.pendingChangelogVersion = info!!.latestVersion
                                 prefs.pendingChangelogNotes = info!!.notes
-                                Toast.makeText(context, "安装已启动，更新后将展示更新公告", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.update_install_started),
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             }
                         }
                     },
@@ -134,7 +148,11 @@ private fun UpdateContent() {
                     cornerRadius = 14.dp,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(if (downloading) "下载中…" else "下载并安装")
+                    Text(
+                        stringResource(
+                            if (downloading) R.string.update_downloading else R.string.update_download_install,
+                        ),
+                    )
                 }
                 if (downloading) {
                     SpacerH(10)
@@ -142,7 +160,11 @@ private fun UpdateContent() {
                 }
             }
             else -> Text(
-                "已是最新版本（当前 v$currentVersion / 最新 ${info!!.latestVersion}）",
+                stringResource(
+                    R.string.update_up_to_date,
+                    currentVersion,
+                    info!!.latestVersion,
+                ),
                 style = MiuixTheme.textStyles.body2,
             )
         }

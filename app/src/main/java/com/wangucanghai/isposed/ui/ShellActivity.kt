@@ -22,9 +22,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.wangucanghai.isposed.R
 import com.wangucanghai.isposed.adb.ShellExecutor
 import com.wangucanghai.isposed.core.AppPrefs
 import com.wangucanghai.isposed.ui.components.ScaffoldPage
@@ -54,7 +56,7 @@ class ShellActivity : BaseActivity() {
         enableEdgeToEdge()
         setContent {
             IsposedTheme {
-                ScaffoldPage(title = "Shell 终端", onBack = { finish() }) {
+                ScaffoldPage(title = stringResource(R.string.shell_title), onBack = { finish() }) {
                     ShellContent()
                 }
             }
@@ -74,7 +76,7 @@ private fun ShellContent() {
         value = cmd,
         onValueChange = { cmd = it },
         modifier = Modifier.fillMaxWidth(),
-        label = "输入命令，如 getprop ro.product.model",
+        label = stringResource(R.string.shell_hint),
         useLabelAsPlaceholder = true,
         singleLine = true,
         cornerRadius = 14.dp,
@@ -99,7 +101,7 @@ private fun ShellContent() {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Icon(Icons.Filled.PlayArrow, contentDescription = null)
-        Text("运行")
+        Text(stringResource(R.string.shell_run))
     }
     SpacerH(16)
     Surface(
@@ -108,7 +110,7 @@ private fun ShellContent() {
         modifier = Modifier.fillMaxWidth().animateContentSize().heightIn(min = 200.dp, max = 480.dp),
     ) {
         Text(
-            text = output.ifBlank { "尚无输出" },
+            text = output.ifBlank { stringResource(R.string.shell_no_output) },
             style = MiuixTheme.textStyles.footnote1,
             fontFamily = FontFamily.Monospace,
             modifier = Modifier
