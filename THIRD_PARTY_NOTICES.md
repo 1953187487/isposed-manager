@@ -35,6 +35,15 @@
 - 许可：**Apache-2.0**
 - 引入内容：`de.robv.android.xposed` 兼容 API 常量与注解（用于模块检测与转换）。
 
+### 4. PocketDev（已合并 / 已归档）
+
+- 项目主页：https://github.com/1953187487/PocketDev（仓库已删除，本项目为唯一承载方）
+- 许可：**AGPL-3.0**（原始许可文本见 `licenses/PocketDev-LICENSE.txt`）
+- 版权：Copyright (C) 2026 万古沧海
+- 引入内容（仅设计要点与接口语义，**不复制其源码**）：AI 流式对话（SSE、OpenAI/Anthropic 兼容、模型列表拉取）、仓库托管访问（GitHub/GitLab/Gitee/Gitea + 访问令牌、按令牌直连下载模块源码）、中转服务器（`node:sqlite` 零依赖、账号会话、官方频道消息按时间戳追加拉取实现即时同步）、Shizuku/Dhizuku 设备自动化桥接（状态探测 + 动作执行）、更新检测/公告、主题与过渡动画。
+- 合规说明：本项目为 GPL-3.0。PocketDev 为 AGPL-3.0，两者不兼容，故本项目**只参考 PocketDev 的设计要点与公开接口语义**，未复制其 AGPL-3.0 源码，避免 AGPL copyleft 传染；引用细节见 `.monkeycode/specs/2026-11-13-pocketdev-merged/merged.md`。
+- 处理方式：PocketDev 发布版本与发行记录不保留；仓库已从 GitHub 删除；仅将其 AI 与仓库开发等功能的设计要点引入本项目。
+
 ## 合规要点
 
 1. **整体许可**：本仓库以 GPL-3.0 发布，满足 LSPosed 的 Copyleft 要求。
